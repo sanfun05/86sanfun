@@ -324,7 +324,7 @@ function BlogApp() {
                     )}
 
                     {/* Sanfun Layout Grid (Main Content + Right Sidebar) */}
-                    <div className={`grid grid-cols-1 lg:grid-cols-12 gap-3 items-start ${activeTab === 'home' ? 'mt-3 mb-6' : 'my-6'}`}>
+                    <div className={`grid grid-cols-1 lg:grid-cols-12 gap-3 ${activeTab === 'home' ? 'mt-3 mb-6' : 'my-6'}`}>
                       
                       {/* Left Main Article Column (Span 9 or Span 12 based on sidebar toggle) */}
                       <div className={layoutConfig.showSidebar !== false ? "lg:col-span-9 space-y-3" : "lg:col-span-12 space-y-3"}>
@@ -558,7 +558,7 @@ function BlogApp() {
 
                       {/* Right Sidebar Column (Span 3) */}
                       {layoutConfig.showSidebar !== false && (
-                        <div className="lg:col-span-3">
+                        <div className="lg:col-span-3 space-y-3 h-full">
                           <SidebarWidget
                             profile={profile}
                             articles={articles}

@@ -154,7 +154,7 @@ export const SidebarWidget: React.FC<SidebarWidgetProps> = ({
       ];
 
   return (
-    <aside className="space-y-3">
+    <aside className="space-y-3 h-full">
       
       {/* 1. SANFUN AUTHOR PROFILE CARD (Blue Gradient with avatar & flexible height) */}
       <div className="bg-gradient-to-br from-indigo-600 via-blue-600 to-indigo-700 text-white rounded-xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between min-h-[350px] transition-all duration-300">
@@ -237,206 +237,167 @@ export const SidebarWidget: React.FC<SidebarWidgetProps> = ({
         </div>
       </div>
 
-      {/* TOP AFTER PROFILE SLOT (e.g. Table of Contents in Article Detail) */}
-      {topAfterProfile}
+      {/* STICKY CONTAINER FOR MODULES BELOW PROFILE CARD */}
+      <div className="sticky top-20 space-y-3">
+        {/* TOP AFTER PROFILE SLOT (e.g. Table of Contents in Article Detail) */}
+        {topAfterProfile}
 
-      {/* DYNAMIC SIDEBAR PROMO CARDS */}
-      {promoBlocks.map((promo) => {
-        const handleCardClick = () => {
-          if (!promo.linkUrl) return;
-          if (promo.linkUrl.startsWith('action:')) {
-            const tabName = promo.linkUrl.replace('action:', '');
-            onTabChange(tabName);
-          } else if (promo.linkUrl.startsWith('alert:')) {
-            alert(promo.linkUrl.replace('alert:', ''));
-          } else if (promo.linkUrl.startsWith('http://') || promo.linkUrl.startsWith('https://')) {
-            window.open(promo.linkUrl, promo.target || '_blank', 'noopener,noreferrer');
-          } else if (promo.linkUrl.startsWith('#')) {
-            const tabName = promo.linkUrl.replace('#', '');
-            onTabChange(tabName);
-          }
-        };
+        {/* DYNAMIC SIDEBAR PROMO CARDS */}
+        {promoBlocks.map((promo) => {
+          const handleCardClick = () => {
+            if (!promo.linkUrl) return;
+            if (promo.linkUrl.startsWith('action:')) {
+              const tabName = promo.linkUrl.replace('action:', '');
+              onTabChange(tabName);
+            } else if (promo.linkUrl.startsWith('alert:')) {
+              alert(promo.linkUrl.replace('alert:', ''));
+            } else if (promo.linkUrl.startsWith('http://') || promo.linkUrl.startsWith('https://')) {
+              window.open(promo.linkUrl, promo.target || '_blank', 'noopener,noreferrer');
+            } else if (promo.linkUrl.startsWith('#')) {
+              const tabName = promo.linkUrl.replace('#', '');
+              onTabChange(tabName);
+            }
+          };
 
-        const isExternal = promo.linkUrl.startsWith('http://') || promo.linkUrl.startsWith('https://');
+          const isExternal = promo.linkUrl.startsWith('http://') || promo.linkUrl.startsWith('https://');
 
-        return (
-          <div
-            key={promo.id || promo.title}
-            onClick={handleCardClick}
-            className={`bg-gradient-to-r ${promo.bgGradient || 'from-emerald-500 via-teal-500 to-green-600'} text-white rounded-lg p-4.5 shadow-sm cursor-pointer hover:scale-[1.02] transition-transform flex items-center justify-between group`}
-          >
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-11 h-11 rounded-md bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl shrink-0 overflow-hidden">
-                {promo.icon && (promo.icon.startsWith('http') || promo.icon.startsWith('data:') || promo.icon.startsWith('/')) ? (
-                  <img src={promo.icon} alt={promo.title} className="w-full h-full object-cover rounded-md" />
-                ) : (
-                  <span>{promo.icon || '📌'}</span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <h4 className="text-xs font-bold flex items-center gap-1">
-                  <span className="truncate">{promo.title}</span>
-                  {promo.badgeText && (
-                    <span className="px-1.5 py-0.2 text-[10px] bg-white/20 rounded-xs font-mono shrink-0">
-                      {promo.badgeText}
-                    </span>
+          return (
+            <div
+              key={promo.id || promo.title}
+              onClick={handleCardClick}
+              className={`bg-gradient-to-r ${promo.bgGradient || 'from-emerald-500 via-teal-500 to-green-600'} text-white rounded-lg p-4.5 shadow-sm cursor-pointer hover:scale-[1.02] transition-transform flex items-center justify-between group`}
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-11 h-11 rounded-md bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl shrink-0 overflow-hidden">
+                  {promo.icon && (promo.icon.startsWith('http') || promo.icon.startsWith('data:') || promo.icon.startsWith('/')) ? (
+                    <img src={promo.icon} alt={promo.title} className="w-full h-full object-cover rounded-md" />
+                  ) : (
+                    <span>{promo.icon || '📌'}</span>
                   )}
-                </h4>
-                {promo.subtitle && (
-                  <p className="text-xs text-white/90 font-medium mt-0.5 truncate">
-                    {promo.subtitle}
-                  </p>
-                )}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-bold flex items-center gap-1">
+                    <span className="truncate">{promo.title}</span>
+                    {promo.badgeText && (
+                      <span className="px-1.5 py-0.2 text-[10px] bg-white/20 rounded-xs font-mono shrink-0">
+                        {promo.badgeText}
+                      </span>
+                    )}
+                  </h4>
+                  {promo.subtitle && (
+                    <p className="text-xs text-white/90 font-medium mt-0.5 truncate">
+                      {promo.subtitle}
+                    </p>
+                  )}
+                </div>
               </div>
+              {isExternal ? (
+                <ExternalLink className="w-4 h-4 text-white/70 group-hover:scale-110 transition-transform shrink-0 ml-2" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-white/70 group-hover:translate-x-1 transition-transform shrink-0 ml-2" />
+              )}
             </div>
-            {isExternal ? (
-              <ExternalLink className="w-4 h-4 text-white/70 group-hover:scale-110 transition-transform shrink-0 ml-2" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-white/70 group-hover:translate-x-1 transition-transform shrink-0 ml-2" />
-            )}
+          );
+        })}
+
+        {/* 4. 👑 正在升级会员 */}
+        <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-lg p-5 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm">
+          <div className="flex items-center justify-between text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-3">
+            <span className="flex items-center gap-1.5">
+              <Crown className="w-4 h-4 text-amber-500 fill-amber-500/20" />
+              <span>正在升级会员</span>
+            </span>
+            <button
+              onClick={() => onOpenUserMember ? onOpenUserMember() : onTabChange('home')}
+              className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-semibold flex items-center gap-0.5"
+            >
+              <span>升级会员</span>
+              <ChevronRight className="w-3 h-3" />
+            </button>
           </div>
-        );
-      })}
 
-      {/* 4. 👑 正在升级会员 */}
-      <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-lg p-5 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm">
-        <div className="flex items-center justify-between text-xs font-bold text-zinc-800 dark:text-zinc-200 mb-3">
-          <span className="flex items-center gap-1.5">
-            <Crown className="w-4 h-4 text-amber-500 fill-amber-500/20" />
-            <span>正在升级会员</span>
-          </span>
-          <button
-            onClick={() => onOpenUserMember ? onOpenUserMember() : onTabChange('home')}
-            className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-semibold flex items-center gap-0.5"
-          >
-            <span>升级会员</span>
-            <ChevronRight className="w-3 h-3" />
-          </button>
-        </div>
+          {/* Featured Recent Member Banner */}
+          {displayMembers[0] && (
+            <div
+              onClick={() => onOpenUserMember ? onOpenUserMember() : onTabChange('home')}
+              className="p-2.5 rounded-md bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 dark:border-amber-500/30 cursor-pointer hover:border-amber-500/50 transition-all mb-3 flex items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <img
+                  src={displayMembers[0].avatar}
+                  alt={displayMembers[0].username}
+                  className="w-8 h-8 rounded-full object-cover border border-amber-400/50 shrink-0 shadow-2xs"
+                />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                      {displayMembers[0].username}
+                    </span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500 text-white shrink-0">
+                      {displayMembers[0].level.split(' ')[0] || displayMembers[0].level}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium truncate mt-0.5">
+                    ✨ 专属高级会员特权已激活
+                  </p>
+                </div>
+              </div>
+              <Sparkles className="w-4 h-4 text-amber-500 shrink-0 animate-pulse" />
+            </div>
+          )}
 
-        {/* Featured Recent Member Banner */}
-        {displayMembers[0] && (
-          <div
-            onClick={() => onOpenUserMember ? onOpenUserMember() : onTabChange('home')}
-            className="p-2.5 rounded-md bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 dark:border-amber-500/30 cursor-pointer hover:border-amber-500/50 transition-all mb-3 flex items-center justify-between gap-2"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <img
-                src={displayMembers[0].avatar}
-                alt={displayMembers[0].username}
-                className="w-8 h-8 rounded-full object-cover border border-amber-400/50 shrink-0 shadow-2xs"
-              />
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">
-                    {displayMembers[0].username}
+          {/* Grid of 12 Recent Upgraded Members (2 columns) */}
+          <div className="grid grid-cols-2 gap-1.5">
+            {displayMembers.slice(0, 12).map((m, idx) => (
+              <div
+                key={m.username + idx}
+                onClick={() => onOpenUserMember ? onOpenUserMember() : onTabChange('home')}
+                className="p-1.5 rounded-md bg-zinc-50 dark:bg-zinc-800/40 hover:bg-amber-50 dark:hover:bg-amber-950/40 border border-zinc-100 dark:border-zinc-800/80 cursor-pointer transition-all flex items-center gap-1.5 min-w-0 group"
+              >
+                <img
+                  src={m.avatar}
+                  alt={m.username}
+                  className="w-5 h-5 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-zinc-700"
+                />
+                <div className="min-w-0 flex-1 flex items-center justify-between gap-1">
+                  <span className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">
+                    {m.username}
                   </span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500 text-white shrink-0">
-                    {displayMembers[0].level.split(' ')[0] || displayMembers[0].level}
+                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-zinc-200/60 dark:bg-zinc-700/60 text-zinc-600 dark:text-zinc-300 group-hover:bg-amber-500 group-hover:text-white transition-colors shrink-0 font-bold">
+                    {m.level.split(' ')[0]}
                   </span>
                 </div>
-                <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium truncate mt-0.5">
-                  ✨ 专属高级会员特权已激活
-                </p>
               </div>
-            </div>
-            <Sparkles className="w-4 h-4 text-amber-500 shrink-0 animate-pulse" />
+            ))}
           </div>
-        )}
+        </div>
 
-        {/* Grid of 12 Recent Upgraded Members (2 columns) */}
-        <div className="grid grid-cols-2 gap-1.5">
-          {displayMembers.slice(0, 12).map((m, idx) => (
-            <div
-              key={m.username + idx}
-              onClick={() => onOpenUserMember ? onOpenUserMember() : onTabChange('home')}
-              className="p-1.5 rounded-md bg-zinc-50 dark:bg-zinc-800/40 hover:bg-amber-50 dark:hover:bg-amber-950/40 border border-zinc-100 dark:border-zinc-800/80 cursor-pointer transition-all flex items-center gap-1.5 min-w-0 group"
+        {/* 5. 🔥 今日热门 */}
+        <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-lg p-5 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm">
+          <div className="flex items-center justify-between mb-3 text-xs font-bold text-zinc-800 dark:text-zinc-200">
+            <span className="flex items-center gap-1.5">
+              <Flame className="w-4 h-4 text-rose-500 fill-rose-500/20" />
+              <span>今日热门</span>
+            </span>
+            <button
+              onClick={() => onTabChange('articles')}
+              className="text-[11px] text-zinc-400 hover:text-indigo-600 transition-colors font-normal"
             >
-              <img
-                src={m.avatar}
-                alt={m.username}
-                className="w-5 h-5 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-zinc-700"
-              />
-              <div className="min-w-0 flex-1 flex items-center justify-between gap-1">
-                <span className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">
-                  {m.username}
-                </span>
-                <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-zinc-200/60 dark:bg-zinc-700/60 text-zinc-600 dark:text-zinc-300 group-hover:bg-amber-500 group-hover:text-white transition-colors shrink-0 font-bold">
-                  {m.level.split(' ')[0]}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+              更多
+            </button>
+          </div>
 
-      {/* 5. 🔥 今日热门 */}
-      <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-lg p-5 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm">
-        <div className="flex items-center justify-between mb-3 text-xs font-bold text-zinc-800 dark:text-zinc-200">
-          <span className="flex items-center gap-1.5">
-            <Flame className="w-4 h-4 text-rose-500 fill-rose-500/20" />
-            <span>今日热门</span>
-          </span>
-          <button
-            onClick={() => onTabChange('articles')}
-            className="text-[11px] text-zinc-400 hover:text-indigo-600 transition-colors font-normal"
-          >
-            更多
-          </button>
-        </div>
-
-        <div className="space-y-2.5">
-          {articles.slice(0, 5).map((article, idx) => (
-            <div
-              key={article.id}
-              onClick={() => onSelectArticle(article)}
-              className="flex items-start gap-2.5 cursor-pointer group text-xs"
-            >
-              <span className={`w-4 h-4 rounded-md shrink-0 flex items-center justify-center font-bold text-[10px] ${
-                idx === 0 ? 'bg-indigo-600 text-white' :
-                idx === 1 ? 'bg-blue-500 text-white' :
-                idx === 2 ? 'bg-sky-500 text-white' :
-                'text-zinc-500 bg-zinc-100 dark:bg-zinc-800'
-              }`}>
-                {idx + 1}
-              </span>
-              <p className="text-zinc-700 dark:text-zinc-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1 leading-snug font-medium">
-                {article.title}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 6. 🕒 最近发布 */}
-      <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-lg p-5 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm">
-        <div className="flex items-center justify-between mb-3 text-xs font-bold text-zinc-800 dark:text-zinc-200">
-          <span className="flex items-center gap-1.5">
-            <Clock className="w-4 h-4 text-emerald-500" />
-            <span>最近发布</span>
-          </span>
-          <button
-            onClick={() => onTabChange('articles')}
-            className="text-[11px] text-zinc-400 hover:text-indigo-600 transition-colors font-normal"
-          >
-            更多
-          </button>
-        </div>
-
-        <div className="space-y-2.5">
-          {[...articles]
-            .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
-            .slice(0, 5)
-            .map((article, idx) => (
+          <div className="space-y-2.5">
+            {articles.slice(0, 5).map((article, idx) => (
               <div
                 key={article.id}
                 onClick={() => onSelectArticle(article)}
                 className="flex items-start gap-2.5 cursor-pointer group text-xs"
               >
                 <span className={`w-4 h-4 rounded-md shrink-0 flex items-center justify-center font-bold text-[10px] ${
-                  idx === 0 ? 'bg-emerald-600 text-white' :
-                  idx === 1 ? 'bg-teal-500 text-white' :
-                  idx === 2 ? 'bg-cyan-500 text-white' :
+                  idx === 0 ? 'bg-indigo-600 text-white' :
+                  idx === 1 ? 'bg-blue-500 text-white' :
+                  idx === 2 ? 'bg-sky-500 text-white' :
                   'text-zinc-500 bg-zinc-100 dark:bg-zinc-800'
                 }`}>
                   {idx + 1}
@@ -446,6 +407,48 @@ export const SidebarWidget: React.FC<SidebarWidgetProps> = ({
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* 6. 🕒 最近发布 */}
+        <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-lg p-5 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm">
+          <div className="flex items-center justify-between mb-3 text-xs font-bold text-zinc-800 dark:text-zinc-200">
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-emerald-500" />
+              <span>最近发布</span>
+            </span>
+            <button
+              onClick={() => onTabChange('articles')}
+              className="text-[11px] text-zinc-400 hover:text-indigo-600 transition-colors font-normal"
+            >
+              更多
+            </button>
+          </div>
+
+          <div className="space-y-2.5">
+            {[...articles]
+              .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
+              .slice(0, 5)
+              .map((article, idx) => (
+                <div
+                  key={article.id}
+                  onClick={() => onSelectArticle(article)}
+                  className="flex items-start gap-2.5 cursor-pointer group text-xs"
+                >
+                  <span className={`w-4 h-4 rounded-md shrink-0 flex items-center justify-center font-bold text-[10px] ${
+                    idx === 0 ? 'bg-emerald-600 text-white' :
+                    idx === 1 ? 'bg-teal-500 text-white' :
+                    idx === 2 ? 'bg-cyan-500 text-white' :
+                    'text-zinc-500 bg-zinc-100 dark:bg-zinc-800'
+                  }`}>
+                    {idx + 1}
+                  </span>
+                  <p className="text-zinc-700 dark:text-zinc-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1 leading-snug font-medium">
+                    {article.title}
+                  </p>
+                </div>
+              ))}
+          </div>
         </div>
       </div>
 

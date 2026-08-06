@@ -148,6 +148,15 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
     setIsPlayingAudio(false);
   }, [initialArticle?.id]);
 
+  // Helper to extract raw text from markdown children
+  const getRawTextFromChildren = (children: any): string => {
+    if (!children) return '';
+    if (typeof children === 'string' || typeof children === 'number') return String(children);
+    if (Array.isArray(children)) return children.map(getRawTextFromChildren).join('');
+    if (children?.props?.children) return getRawTextFromChildren(children.props.children);
+    return '';
+  };
+
   // Handle scroll progress and active section tracking
   useEffect(() => {
     const handleScroll = () => {
@@ -157,23 +166,28 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
         setScrollProgress(Math.min(100, Math.max(0, currentProgress)));
       }
 
-      // Track active heading
-      const headingElements = document.querySelectorAll('.article-content h1, .article-content h2');
-      let currentActive = '';
+      // Track active heading (h1, h2, h3)
+      const headingElements = document.querySelectorAll('.article-content h1, .article-content h2, .article-content h3');
+      let currentActiveId = '';
+      let currentActiveText = '';
+
       headingElements.forEach((el) => {
         const rect = el.getBoundingClientRect();
-        if (rect.top <= 120) {
-          currentActive = el.id || el.textContent || '';
+        if (rect.top <= 140) {
+          currentActiveId = el.id || '';
+          currentActiveText = el.getAttribute('data-heading-text') || el.textContent?.trim() || '';
         }
       });
-      if (currentActive) {
-        setActiveHeadingId(currentActive);
+
+      if (currentActiveId || currentActiveText) {
+        setActiveHeadingId(currentActiveId || currentActiveText);
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [article.id]);
 
   // Extract headings for TOC
   const headings = (article?.content || '')
@@ -181,7 +195,7 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
     .filter(line => line.startsWith('# ') || line.startsWith('## ') || line.startsWith('### '))
     .map(line => {
       const level = line.startsWith('### ') ? 3 : line.startsWith('## ') ? 2 : 1;
-      const text = line.replace(/^#+\s*/, '');
+      const text = line.replace(/^#+\s*/, '').replace(/[*_~`]/g, '').trim();
       const id = text.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-');
       return { level, text, id };
     });
@@ -324,12 +338,23 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
   };
 
   const scrollToHeading = (id: string, text: string) => {
-    setActiveHeadingId(text);
-    const element = Array.from(document.querySelectorAll('h1, h2, h3')).find(
-      el => el.textContent?.includes(text)
-    );
+    setActiveHeadingId(id || text);
+    let element: HTMLElement | null = null;
+    if (id) {
+      element = document.getElementById(id);
+    }
+    if (!element && text) {
+      const allHeadings = Array.from(document.querySelectorAll('.article-content h1, .article-content h2, .article-content h3'));
+      element = (allHeadings.find(el => {
+        const dataText = el.getAttribute('data-heading-text') || '';
+        const txt = el.textContent || '';
+        return dataText === text || txt.includes(text) || text.includes(dataText);
+      }) as HTMLElement) || null;
+    }
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const yOffset = -90;
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
     }
   };
 
@@ -458,7 +483,7 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
       </div>
 
       {/* Main Two-Column Layout (Content + Sidebar) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
         
         {/* Left Column: Article Body & Interactive Modules (col-span-9 - Matched to homepage) */}
         <div className="lg:col-span-9 space-y-3">
@@ -521,20 +546,33 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
                 rehypePlugins={[rehypeRaw]}
                 components={{
                   h1({ children, ...props }: any) {
-                    const text = String(children);
+                    const rawText = getRawTextFromChildren(children).replace(/[*_~`]/g, '').trim();
+                    const id = rawText.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-');
                     return (
-                      <h1 {...props} className="text-xl sm:text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 pt-6 pb-2 border-b-2 border-rose-500/20 flex items-center gap-2.5">
-                        <span className="w-2.5 h-6 rounded-full bg-rose-500 inline-block" />
+                      <h1 id={id} data-heading-text={rawText} {...props} className="text-xl sm:text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 pt-6 pb-2 border-b-2 border-rose-500/20 flex items-center gap-2.5 scroll-mt-24">
+                        <span className="w-2.5 h-6 rounded-full bg-rose-500 inline-block shrink-0" />
                         <span>{children}</span>
                       </h1>
                     );
                   },
                   h2({ children, ...props }: any) {
+                    const rawText = getRawTextFromChildren(children).replace(/[*_~`]/g, '').trim();
+                    const id = rawText.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-');
                     return (
-                      <h2 {...props} className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-100 pt-4 pb-1 flex items-center gap-2 text-rose-600 dark:text-rose-400">
+                      <h2 id={id} data-heading-text={rawText} {...props} className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-100 pt-4 pb-1 flex items-center gap-2 text-rose-600 dark:text-rose-400 scroll-mt-24">
                         <span className="text-rose-500 font-mono">#</span>
                         <span>{children}</span>
                       </h2>
+                    );
+                  },
+                  h3({ children, ...props }: any) {
+                    const rawText = getRawTextFromChildren(children).replace(/[*_~`]/g, '').trim();
+                    const id = rawText.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-');
+                    return (
+                      <h3 id={id} data-heading-text={rawText} {...props} className="text-base sm:text-lg font-semibold text-zinc-800 dark:text-zinc-200 pt-3 pb-1 flex items-center gap-2 scroll-mt-24">
+                        <span className="text-rose-400 font-mono">##</span>
+                        <span>{children}</span>
+                      </h3>
                     );
                   },
                   table({ children }: any) {
@@ -1389,7 +1427,7 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
         </div>
 
         {/* Right Column: Sticky Sidebar Widgets (col-span-3 - Matched to homepage) */}
-        <div className="lg:col-span-3 space-y-3">
+        <div className="lg:col-span-3 space-y-3 h-full">
           
           {/* Personal Info & Sidebar Widget with TOC inserted after profile card */}
           <SidebarWidget
@@ -1428,20 +1466,35 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
                     </div>
                   </div>
 
-                  <div className="space-y-1 max-h-72 overflow-y-auto pr-1 text-xs">
+                  <div className="space-y-1 max-h-80 overflow-y-auto pr-1 text-xs scroll-smooth">
                     {headings.map((h, i) => {
-                      const isActive = activeHeadingId === h.text;
+                      const isActive = activeHeadingId === h.id || activeHeadingId === h.text || (!!activeHeadingId && (activeHeadingId.includes(h.text) || h.text.includes(activeHeadingId)));
                       return (
                         <div
                           key={i}
                           onClick={() => scrollToHeading(h.id, h.text)}
-                          className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer truncate text-xs ${
+                          className={`px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer truncate text-xs flex items-center gap-2 ${
                             isActive
-                              ? 'bg-rose-500 text-white font-bold shadow-2xs'
-                              : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                          } ${h.level === 2 ? 'pl-4' : h.level === 3 ? 'pl-6 text-[11px]' : 'font-semibold'}`}
+                              ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white font-bold shadow-sm translate-x-1'
+                              : 'text-zinc-600 dark:text-zinc-400 hover:bg-rose-50/80 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 font-medium'
+                          } ${
+                            h.level === 1
+                              ? 'font-bold'
+                              : h.level === 2
+                              ? 'ml-3 text-[11.5px]'
+                              : 'ml-6 text-[11px] opacity-90'
+                          }`}
                         >
-                          • {h.text}
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 transition-all ${
+                            isActive
+                              ? 'bg-white scale-125'
+                              : h.level === 1
+                              ? 'bg-rose-500'
+                              : h.level === 2
+                              ? 'bg-zinc-400 dark:bg-zinc-600'
+                              : 'bg-zinc-300 dark:bg-zinc-700'
+                          }`} />
+                          <span className="truncate">{h.text}</span>
                         </div>
                       );
                     })}
