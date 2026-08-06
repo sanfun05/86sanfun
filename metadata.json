@@ -1,0 +1,8 @@
+{
+  "name": "Remix Sanfun blog",
+  "description": "Sanfun blog OS",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
