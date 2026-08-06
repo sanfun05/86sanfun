@@ -7,7 +7,7 @@ import {
   FolderPlus, Tag, Monitor, Laptop, Keyboard, Smartphone, Camera, Headphones, Layout, Code, Star, CheckCircle2,
   Check, Copy, AlertCircle, Lightbulb, AlertTriangle, Rocket, PartyPopper, ChevronDown, Quote, Table, ListOrdered, FileCode, LayoutTemplate, CopyCheck, Wand2, Image as ImageIcon,
   Bold, Italic, Underline, Strikethrough, Link as LinkIcon, List as ListIcon, CheckSquare, AlignLeft, AlignCenter, AlignRight, Type, Palette, Smile, Terminal, Upload, Columns, Split, ImagePlus, Box, Compass, Globe, Layers, Crop,
-  Maximize2, Minimize2, Minus, ArrowUp, ArrowDown, Cloud, HardDrive, Paperclip, Coins, Download, Key, Music, Disc, Radio
+  Maximize2, Minimize2, Minus, ArrowUp, ArrowDown, Cloud, HardDrive, Paperclip, Coins, Download, Key, Music, Disc, Radio, Clock
 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -16,6 +16,7 @@ import rehypeRaw from 'rehype-raw';
 import { PanoramaViewer } from './PanoramaViewer';
 import { ThreeDViewer } from './ThreeDViewer';
 import { ImageCropperModal } from './ImageCropperModal';
+import { formatSiteLink } from '../utils/urlUtils';
 import { AdminMembersManager } from './admin/AdminMembersManager';
 import { AdminTiersManager } from './admin/AdminTiersManager';
 import { AdminMessagesManager } from './admin/AdminMessagesManager';
@@ -1033,6 +1034,7 @@ export async function getStaticProps() {
   const [profileStatus, setProfileStatus] = useState(profile.statusText);
   const [profileStatusEmoji, setProfileStatusEmoji] = useState(profile.statusEmoji || '🤩');
   const [profileLocation, setProfileLocation] = useState(profile.location);
+  const [profileSiteDomain, setProfileSiteDomain] = useState(profile.siteDomain || 'https://blog.sanfun.com');
   const [profileIcpNumber, setProfileIcpNumber] = useState(siteConfig?.icpNumber || '粤ICP备2021000000号-1');
   const [profileTechStack, setProfileTechStack] = useState<{ name: string; icon: string; color: string }[]>(profile.techStack || []);
   const [profileCustomLinks, setProfileCustomLinks] = useState<{ id: string; name: string; icon: string; url: string; color?: string }[]>(
@@ -1260,6 +1262,7 @@ export async function getStaticProps() {
       setProfileStatus(profile.statusText);
       setProfileStatusEmoji(profile.statusEmoji || '🤩');
       setProfileLocation(profile.location);
+      setProfileSiteDomain(profile.siteDomain || 'https://blog.sanfun.com');
       setProfileTechStack(profile.techStack || []);
       setProfileCustomLogoType(profile.customLogoType || 'image');
       setProfileCustomLogoUrl(profile.customLogoUrl || siteConfig?.logoImageUrl || '');
@@ -1819,13 +1822,20 @@ export async function getStaticProps() {
         statusText: profileStatus,
         statusEmoji: profileStatusEmoji,
         location: profileLocation,
+        siteDomain: profileSiteDomain,
         techStack: profileTechStack,
         customLogoType: profileCustomLogoType,
         customLogoUrl: profileCustomLogoUrl,
         customLogoText: profileCustomLogoText,
-        customLogoLink: profileCustomLogoLink,
-        customLinks: profileCustomLinks,
-        sidebarPromos: profileSidebarPromos
+        customLogoLink: formatSiteLink(profileCustomLogoLink, profileSiteDomain),
+        customLinks: profileCustomLinks.map(link => ({
+          ...link,
+          url: formatSiteLink(link.url, profileSiteDomain)
+        })),
+        sidebarPromos: profileSidebarPromos.map(promo => ({
+          ...promo,
+          linkUrl: formatSiteLink(promo.linkUrl, profileSiteDomain)
+        }))
       };
 
       const res = await fetch('/api/author', {
@@ -2654,40 +2664,73 @@ export async function getStaticProps() {
                               <span className="text-[10px] font-mono text-zinc-400">实时预览与水印算法</span>
                             </div>
 
-                            {/* Live Cover Card Preview */}
+                             {/* Live Cover Card Preview - Exact Match with Homepage ArticleCard */}
                             <div className="space-y-1.5">
                               <span className="text-[11px] font-bold text-zinc-500">封面实时效果预览:</span>
-                              <div className={`relative h-36 w-full rounded-2xl overflow-hidden bg-gradient-to-tr ${coverBg || 'from-indigo-600 via-slate-700 to-blue-600'} p-4 flex items-center justify-center select-none shadow-md border border-white/20 transition-all duration-300`}>
-                                {/* Watermark Background Text */}
-                                <span className="absolute text-4xl sm:text-5xl font-black text-white/20 uppercase tracking-wider font-sans truncate max-w-full pointer-events-none transform -rotate-3 scale-110">
-                                  {coverText || category || 'SANFUN'}
-                                </span>
+                              {(() => {
+                                const previewWatermarkText = coverText || category || 'SANFUN';
+                                const previewMid = Math.ceil(previewWatermarkText.length / 2);
+                                const previewWatermarkLeft = previewWatermarkText.slice(0, previewMid);
+                                const previewWatermarkRight = previewWatermarkText.slice(previewMid);
 
-                                {/* Center Floating Mascot Icon with Flat Stroke & Colored Shadow */}
-                                <div className="relative z-10 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/95 dark:bg-zinc-900/95 shadow-lg shadow-indigo-500/25 border-2 border-white/90 dark:border-zinc-700/90 flex items-center justify-center text-2xl sm:text-3xl overflow-hidden p-1">
-                                  {mascotIcon.startsWith('http') || mascotIcon.startsWith('data:') || mascotIcon.startsWith('/') ? (
-                                    <img src={mascotIcon} alt="Mascot Icon" className="w-full h-full object-cover rounded-xl" />
-                                  ) : (
-                                    <span>{mascotIcon || '🪵'}</span>
-                                  )}
-                                </div>
+                                const getLightestBorderColor = (bg: string) => {
+                                  if (!bg) return 'border-white/95 dark:border-zinc-200/90';
+                                  const lower = bg.toLowerCase();
+                                  if (lower.includes('rose') || lower.includes('pink') || lower.includes('red')) return 'border-rose-200 dark:border-rose-300';
+                                  if (lower.includes('amber') || lower.includes('yellow') || lower.includes('orange')) return 'border-amber-200 dark:border-amber-300';
+                                  if (lower.includes('teal') || lower.includes('cyan') || lower.includes('emerald') || lower.includes('green')) return 'border-cyan-200 dark:border-teal-200';
+                                  if (lower.includes('purple') || lower.includes('violet') || lower.includes('fuchsia')) return 'border-purple-200 dark:border-violet-200';
+                                  if (lower.includes('blue') || lower.includes('sky')) return 'border-sky-200 dark:border-blue-200';
+                                  if (lower.includes('indigo')) return 'border-indigo-200 dark:border-indigo-300';
+                                  return 'border-zinc-100 dark:border-zinc-200';
+                                };
 
-                                {featured && (
-                                  <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-zinc-950 shadow-sm">
-                                    ⭐ 精选
-                                  </span>
-                                )}
+                                return (
+                                  <div className={`relative h-44 sm:h-52 w-full rounded-2xl overflow-hidden bg-gradient-to-tr ${coverBg || 'from-indigo-600 via-slate-700 to-blue-600'} p-3.5 sm:p-5 flex items-center justify-center select-none shadow-lg border border-white/20 transition-all duration-300 group`}>
+                                    {/* Watermark Background Text - Split left & right matching homepage ArticleCard */}
+                                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center gap-[46px] sm:gap-[72px] pointer-events-none z-0 px-2 select-none">
+                                      <span className="text-[38px] sm:text-[60px] font-black text-white/45 uppercase tracking-tight font-sans leading-none text-right whitespace-nowrap">
+                                        {previewWatermarkLeft}
+                                      </span>
+                                      <span className="text-[38px] sm:text-[60px] font-black text-white/45 uppercase tracking-tight font-sans leading-none text-left whitespace-nowrap">
+                                        {previewWatermarkRight}
+                                      </span>
+                                    </div>
 
-                                <span className="absolute bottom-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] font-mono text-white/90 bg-black/30 backdrop-blur-md border border-white/20">
-                                  {readStatus || '最新'}
-                                </span>
-                              </div>
+                                    {/* Background Decorative Blur Particles */}
+                                    <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-white/10 blur-xl pointer-events-none" />
+                                    <div className="absolute -left-6 -top-6 w-28 h-28 rounded-full bg-black/10 blur-xl pointer-events-none" />
+
+                                    {/* Center 3D Floating Mascot Card matching homepage ArticleCard */}
+                                    <div className={`relative z-10 w-[78px] h-[78px] sm:w-[98px] sm:h-[98px] rounded-[20px] sm:rounded-[24px] bg-white/95 dark:bg-zinc-300/95 shadow-[0_12px_28px_rgba(0,0,0,0.35)] sm:shadow-[0_16px_36px_rgba(0,0,0,0.38)] border-3 sm:border-4 ${getLightestBorderColor(coverBg)} flex items-center justify-center text-3xl sm:text-4xl hover:scale-105 transition-all duration-300 overflow-hidden p-1.5 sm:p-2`}>
+                                      {mascotIcon.startsWith('http') || mascotIcon.startsWith('data:') || mascotIcon.startsWith('/') ? (
+                                        <img src={mascotIcon} alt="Mascot Icon" className="w-full h-full object-cover rounded-[14px] sm:rounded-[18px]" />
+                                      ) : (
+                                        <span className="drop-shadow-md select-none">{mascotIcon || '🪵'}</span>
+                                      )}
+                                    </div>
+
+                                    {/* Featured Badge */}
+                                    {featured && (
+                                      <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-zinc-950 shadow-xs z-10">
+                                        ⭐ 精选
+                                      </span>
+                                    )}
+
+                                    {/* Reading Status Pill */}
+                                    <span className="absolute bottom-2.5 right-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono text-white/90 bg-black/30 backdrop-blur-md border border-white/20 flex items-center gap-1 z-10">
+                                      <Clock className="w-3 h-3" />
+                                      <span>{readStatus || '最新'}</span>
+                                    </span>
+                                  </div>
+                                );
+                              })()}
                             </div>
 
-                            {/* Gradient Preset Swatches */}
+                            {/* Gradient Preset Swatches - 15 Pure Dual-Tone Gradients */}
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">选取封面渐变模板Preset:</span>
+                                <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">选取封面渐变模板Preset (15种高阶纯净预设):</span>
                                 <span className="text-[10px] text-zinc-400">点击即刻套用</span>
                               </div>
                               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -2703,7 +2746,10 @@ export async function getStaticProps() {
                                   { name: '深海碧蓝', bg: 'from-cyan-400 to-blue-600' },
                                   { name: '暖阳柠黄', bg: 'from-amber-400 to-yellow-500' },
                                   { name: '冷钛银灰', bg: 'from-slate-400 to-slate-600' },
-                                  { name: '暗夜高奢', bg: 'from-zinc-700 to-zinc-900' },
+                                  { name: '深邃高奢', bg: 'from-zinc-700 to-zinc-900' },
+                                  { name: '极光高璀', bg: 'from-indigo-600 via-slate-700 to-blue-600' },
+                                  { name: '落日晚霞', bg: 'from-fuchsia-500 to-orange-400' },
+                                  { name: '静谧黛蓝', bg: 'from-blue-600 to-indigo-800' },
                                 ].map((p) => (
                                   <button
                                     key={p.name}
@@ -5074,6 +5120,30 @@ export async function getStaticProps() {
                         onChange={(e) => setProfileTagline(e.target.value)}
                         className="w-full bg-zinc-50 dark:bg-zinc-800 p-2.5 rounded-md text-xs text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 mt-1"
                       />
+                    </div>
+                  </div>
+
+                  {/* SITE DOMAIN DEFINITION CONTROL CARD */}
+                  <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 space-y-2">
+                    <label className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 uppercase flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Globe className="w-4 h-4 text-indigo-500" />
+                        <span>站点首选域名定义 (Site Domain)</span>
+                      </span>
+                      <span className="text-[10px] text-zinc-400 font-normal">例如: https://blog.sanfun.com</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={profileSiteDomain}
+                      onChange={(e) => setProfileSiteDomain(e.target.value)}
+                      placeholder="例如: https://blog.sanfun.com 或 blog.sanfun.com"
+                      className="w-full bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs font-mono text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    />
+                    <div className="text-[11px] text-zinc-500 dark:text-zinc-400 space-y-1 pt-0.5 leading-relaxed">
+                      <p className="flex items-start gap-1">
+                        <span className="text-indigo-500 font-bold shrink-0">💡</span>
+                        <span>填写保存后，全站所有内部页面、文章、导航及组件链接均会自动整理为规范的相对路径格式（如 <code className="px-1 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 font-mono text-indigo-600 dark:text-indigo-400">/article/a1</code>），同时友情链接及自定义第三方外链保持不变。</span>
+                      </p>
                     </div>
                   </div>
 

@@ -285,9 +285,20 @@ function BlogApp() {
                   categories={categories}
                   selectedCategory={selectedCategory}
                   selectedTag={selectedTag}
-                  onSelectCategory={setSelectedCategory}
-                  onSelectTag={setSelectedTag}
-                  onTabChange={setActiveTab}
+                  onSelectCategory={(cat) => {
+                    setSelectedCategory(cat);
+                    setActiveTab('articles');
+                    setSelectedArticle(null);
+                  }}
+                  onSelectTag={(tag) => {
+                    setSelectedTag(tag);
+                    setActiveTab('articles');
+                    setSelectedArticle(null);
+                  }}
+                  onTabChange={(tab) => {
+                    setActiveTab(tab);
+                    setSelectedArticle(null);
+                  }}
                   onOpenAIChat={() => setAiChatOpen(true)}
                   currentUser={currentUser}
                   onUnlockArticle={handleUnlockArticle}

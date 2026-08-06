@@ -2011,6 +2011,27 @@ app.post("/api/music/parse", (req, res) => {
   res.status(400).json({ error: "未能识别音乐链接，请检查 URL 格式（支持网易云、QQ音乐、酷狗或直连 MP3）" });
 });
 
+// Express Global Error Handler Middleware for API routes
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("Unhandled API Express Error:", err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(500).json({
+    error: "服务器处理请求时遇到异常",
+    details: err.message || "内部服务器错误"
+  });
+});
+
+// Node.js Process Level Safety
+process.on('unhandledRejection', (reason, promise) => {
+  console.warn('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
 
 // --- SERVER STARTUP ---
 async function start() {

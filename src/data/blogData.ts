@@ -9,6 +9,7 @@ export const authorProfile: AuthorProfile = {
   location: "中国 · 深圳",
   statusText: "坚持是最好的老师 🤩",
   statusEmoji: "🤩",
+  siteDomain: "https://blog.sanfun.com",
   socials: {
     github: "https://github.com",
     twitter: "https://twitter.com",
@@ -224,7 +225,7 @@ curl -s -X POST https://api.sanfun.net/api/openclaw/review \\
         replies: [
           {
             id: "c-1-r1",
-            author: "张洪Heo",
+            author: authorProfile.name,
             avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120",
             content: "是的！将调试过程中遇到的程序，当下的所有工作都在skill搞定，就可以留到下次做更多有意义的事了",
             date: "3天前",
@@ -251,7 +252,7 @@ curl -s -X POST https://api.sanfun.net/api/openclaw/review \\
         replies: [
           {
             id: "c-2-r1",
-            author: "张洪Heo",
+            author: authorProfile.name,
             avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120",
             content: "一天4000-5000wtoken，一个月大概50左右tokenplan就挺需要的，用deepseek v4 flash模型",
             date: "4天前",
@@ -266,7 +267,7 @@ curl -s -X POST https://api.sanfun.net/api/openclaw/review \\
             id: "c-2-r2",
             author: "黑袍",
             avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=120",
-            content: "回复 @张洪Heo ：期待你的分享",
+            content: `回复 @${authorProfile.name} ：期待你的分享`,
             date: "4天前",
             likes: 0,
             level: "Lv.2",
@@ -290,7 +291,7 @@ curl -s -X POST https://api.sanfun.net/api/openclaw/review \\
         replies: [
           {
             id: "c-3-r1",
-            author: "张洪Heo",
+            author: authorProfile.name,
             avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120",
             content: "通过16排版修补来的，这么久了申明难道总是想把自己打造成的skill更好",
             date: "4天前",

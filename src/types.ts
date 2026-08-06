@@ -267,6 +267,7 @@ export interface AuthorProfile {
   location: string;
   statusText: string;
   statusEmoji: string;
+  siteDomain?: string;
   customLogoType?: 'image' | 'text' | 'icon';
   customLogoUrl?: string;
   customLogoText?: string;

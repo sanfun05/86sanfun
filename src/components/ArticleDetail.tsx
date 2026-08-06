@@ -204,6 +204,29 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
   const hasUserCommented = comments.some(c => c.author === currentUser?.username || (c as any).userId === currentUser?.id);
   const isUnlockedByComment = !!(article.requireCommentToView && hasUserCommented);
 
+  // Real-time article metrics computation
+  const articleContentText = article?.content || '';
+  const calculatedWordCount = article?.wordCount || articleContentText.replace(/[\s#*`~_>\-[\]()|]/g, '').length;
+  const calculatedReadingMinutes = article?.readingTime ? parseInt(article.readingTime) || Math.max(1, Math.ceil(calculatedWordCount / 350)) : Math.max(1, Math.ceil(calculatedWordCount / 350));
+  const articleLocation = (article as any)?.location || 'IP属地：北京';
+
+  // Mascot and border styling matching homepage article card
+  const defaultMascots = ['🪵', '🐧', '🔋', '📰', '🐱', '🤖', '💡', '🚀'];
+  const mascot = article.mascotIcon || defaultMascots[Math.abs(article.id.length) % defaultMascots.length];
+
+  const getLightestBorderColor = (bg?: string) => {
+    if (!bg) return 'border-white/95 dark:border-zinc-200/90';
+    const lower = bg.toLowerCase();
+    if (lower.includes('rose') || lower.includes('pink') || lower.includes('red')) return 'border-rose-200 dark:border-rose-300';
+    if (lower.includes('amber') || lower.includes('yellow') || lower.includes('orange')) return 'border-amber-200 dark:border-amber-300';
+    if (lower.includes('teal') || lower.includes('cyan') || lower.includes('emerald') || lower.includes('green')) return 'border-cyan-200 dark:border-teal-200';
+    if (lower.includes('purple') || lower.includes('violet') || lower.includes('fuchsia')) return 'border-purple-200 dark:border-violet-200';
+    if (lower.includes('blue') || lower.includes('sky')) return 'border-sky-200 dark:border-blue-200';
+    if (lower.includes('indigo')) return 'border-indigo-200 dark:border-indigo-300';
+    return 'border-zinc-100 dark:border-zinc-200';
+  };
+  const lightestBorderClass = getLightestBorderColor(article.coverBg);
+
   // Calculate prev and next articles
   const currentIndex = allArticles.findIndex(a => a.id === article.id);
   const prevArticle = currentIndex > 0 ? allArticles[currentIndex - 1] : null;
@@ -430,52 +453,46 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
 
             {/* Meta Attributes Bar */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-white/90 font-medium pt-2">
-              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg border border-white/10">
+              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg border border-white/10" title="实际文章阅读次数">
                 <Eye className="w-3.5 h-3.5 text-rose-200" />
                 <span>{article.views} 次阅读</span>
               </span>
 
-              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg border border-white/10">
+              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg border border-white/10" title="发布时间">
                 <Calendar className="w-3.5 h-3.5 text-orange-200" />
                 <span>{article.date}</span>
               </span>
 
-              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg border border-white/10">
+              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg border border-white/10" title="动态评论互动数">
                 <MessageSquare className="w-3.5 h-3.5 text-amber-200" />
-                <span>{comments.length || 12} 评论</span>
+                <span>{comments.length} 评论</span>
               </span>
 
-              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg border border-white/10">
+              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg border border-white/10" title="点赞总数">
                 <Heart className="w-3.5 h-3.5 text-rose-300" />
                 <span>{likes} 赞</span>
               </span>
 
-              {/* Status Badges */}
-              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/80 text-white border border-emerald-400/30">
-                <CheckCircle2 className="w-3 h-3" />
-                <span>公众号同步</span>
+              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg border border-white/10" title="文章发布IP属地">
+                <MapPin className="w-3.5 h-3.5 text-sky-200" />
+                <span>{articleLocation}</span>
               </span>
 
-              <span className="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] bg-white/15 text-white/90">
-                <MapPin className="w-3 h-3" />
-                <span>北京</span>
-              </span>
-
-              <span className="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] bg-white/15 text-white/90 font-mono">
-                260 字/分钟
+              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg border border-white/10" title="实际字数与预计阅读时间">
+                <Clock className="w-3.5 h-3.5 text-emerald-200" />
+                <span>{calculatedWordCount.toLocaleString()} 字 · 约 {calculatedReadingMinutes} 分钟</span>
               </span>
             </div>
           </div>
 
-          {/* Right Floating Mascot Cover Card (Sanfun Glass Sticker) */}
-          <div className="self-center lg:self-auto shrink-0">
-            <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-2 border-white/80 shadow-xl p-3 flex flex-col items-center justify-center text-center transform hover:scale-105 transition-all group">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br from-rose-500 to-orange-400 flex items-center justify-center text-3xl sm:text-4xl shadow-md mb-2">
-                {article.mascotIcon || '🦀'}
-              </div>
-              <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate w-full px-1">
-                {article.coverText || '报错回顾'}
-              </span>
+          {/* Right Floating Mascot Cover Card (Matching Homepage Article Card Cover Icon) */}
+          <div className="self-center lg:self-auto shrink-0 my-auto">
+            <div className={`relative z-10 w-[84px] h-[84px] sm:w-[110px] sm:h-[110px] rounded-[20px] sm:rounded-[24px] bg-white/95 dark:bg-zinc-300/95 shadow-[0_12px_28px_rgba(0,0,0,0.35)] sm:shadow-[0_16px_36px_rgba(0,0,0,0.38)] border-3 sm:border-4 ${lightestBorderClass} flex items-center justify-center text-3xl sm:text-5xl hover:scale-110 hover:-translate-y-1 hover:rotate-2 transition-all duration-300 overflow-hidden p-1.5 sm:p-2`}>
+              {mascot.startsWith('http') || mascot.startsWith('data:') || mascot.startsWith('/') ? (
+                <img src={mascot} alt="Cover Mascot" className="w-full h-full object-cover rounded-[14px] sm:rounded-[18px]" />
+              ) : (
+                <span className="drop-shadow-md select-none">{mascot}</span>
+              )}
             </div>
           </div>
 
@@ -1019,21 +1036,21 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <img
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200"
-                    alt="张洪Heo"
+                    src={profile?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200"}
+                    alt={profile?.name || "博主"}
                     className="w-12 h-12 rounded-full object-cover border-2 border-rose-500 shadow-md"
                   />
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">
-                        张洪Heo (三疯Sanfun)
+                        {profile?.name || "三疯Sanfun"}
                       </h3>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white">
                         博主
                       </span>
                     </div>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      分享设计和科技生活 · 全栈开发与视觉工学
+                      {profile?.tagline || profile?.bio || "分享设计和科技生活 · 全栈开发与视觉工学"}
                     </p>
                   </div>
                 </div>
@@ -1307,21 +1324,25 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
 
             {/* Comment List */}
             <div className="space-y-6">
-              {comments.map((c) => (
+              {comments.map((c) => {
+                const isCommentAuthor = (c as any).isAuthor || c.level?.includes('博主');
+                const commentAuthorName = isCommentAuthor ? (profile?.name || c.author) : c.author;
+                const commentAvatar = isCommentAuthor ? (profile?.avatar || c.avatar) : c.avatar;
+                return (
                 <div key={c.id} className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 space-y-3">
                   
                   {/* Comment User Header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <img
-                        src={c.avatar}
-                        alt={c.author}
+                        src={commentAvatar}
+                        alt={commentAuthorName}
                         className="w-8 h-8 rounded-full object-cover border border-rose-500/40"
                       />
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100">
-                            {c.author}
+                            {commentAuthorName}
                           </span>
                           {c.level && (
                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
@@ -1390,36 +1411,41 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
                   {/* Nested Replies List */}
                   {c.replies && c.replies.length > 0 && (
                     <div className="ml-10 mt-3 space-y-2.5 pt-2 border-t border-zinc-200/60 dark:border-zinc-700/60">
-                      {c.replies.map((r) => (
-                        <div key={r.id} className="p-3 rounded-xl bg-white dark:bg-zinc-800/80 border border-rose-200/60 dark:border-rose-900/40 space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <img
-                                src={r.avatar}
-                                alt={r.author}
-                                className="w-6 h-6 rounded-full object-cover border border-rose-500"
-                              />
-                              <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                                {r.author}
-                              </span>
-                              {r.isAuthor && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-rose-500 text-white">
-                                  博主
+                      {c.replies.map((r) => {
+                        const replyAuthorName = r.isAuthor ? (profile?.name || r.author) : r.author;
+                        const replyAvatar = r.isAuthor ? (profile?.avatar || r.avatar) : r.avatar;
+                        return (
+                          <div key={r.id} className="p-3 rounded-xl bg-white dark:bg-zinc-800/80 border border-rose-200/60 dark:border-rose-900/40 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={replyAvatar}
+                                  alt={replyAuthorName}
+                                  className="w-6 h-6 rounded-full object-cover border border-rose-500"
+                                />
+                                <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                                  {replyAuthorName}
                                 </span>
-                              )}
+                                {r.isAuthor && (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-rose-500 text-white">
+                                    博主
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-zinc-400 font-mono">{r.date}</span>
                             </div>
-                            <span className="text-[10px] text-zinc-400 font-mono">{r.date}</span>
+                            <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed pl-8">
+                              {r.content}
+                            </p>
                           </div>
-                          <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed pl-8">
-                            {r.content}
-                          </p>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
                 </div>
-              ))}
+                );
+              })}
             </div>
 
           </div>

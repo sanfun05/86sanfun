@@ -7,6 +7,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { SiteConfig, AuthorProfile, ModuleLayoutConfig } from '../types';
+import { formatSiteLink, isExternalLink } from '../utils/urlUtils';
 
 interface FooterProps {
   totalArticles: number;
@@ -157,9 +158,10 @@ export const Footer: React.FC<FooterProps> = ({ totalArticles, totalMoments, onO
 
           <div className="flex flex-wrap items-center gap-1">
             {footerLinks.map((link) => {
-              const isAction = link.url?.startsWith('action:');
+              const formattedUrl = formatSiteLink(link.url, profile?.siteDomain);
+              const isAction = formattedUrl.startsWith('action:');
               if (isAction) {
-                const actionTab = link.url.replace('action:', '');
+                const actionTab = formattedUrl.replace('action:', '');
                 return (
                   <button
                     key={link.id || link.name}
@@ -177,10 +179,24 @@ export const Footer: React.FC<FooterProps> = ({ totalArticles, totalMoments, onO
                   </button>
                 );
               }
+              const isExt = isExternalLink(formattedUrl, profile?.siteDomain);
+              if (!isExt && formattedUrl.startsWith('/')) {
+                const tab = formattedUrl.replace('/', '');
+                return (
+                  <button
+                    key={link.id || link.name}
+                    onClick={() => onTabChange?.(tab || 'home')}
+                    className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors flex items-center justify-center cursor-pointer"
+                    title={link.name}
+                  >
+                    {renderFooterIcon(link.icon)}
+                  </button>
+                );
+              }
               return (
                 <a
                   key={link.id || link.name}
-                  href={link.url}
+                  href={formattedUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors flex items-center justify-center"

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthorProfile, Article, Moment } from '../types';
+import { formatSiteLink, isExternalLink } from '../utils/urlUtils';
 import { useTheme } from '../context/ThemeContext';
 import {
   Sparkles, Calendar, Github, Heart, MessageSquareQuote, ChevronRight, ShieldCheck, Tag, ExternalLink, QrCode, Flame,
@@ -175,7 +176,7 @@ export const SidebarWidget: React.FC<SidebarWidgetProps> = ({
               alt={profile.name}
               className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover ring-4 ring-white/30 shadow-2xl border-2 border-white/20 group-hover:scale-105 transition-transform duration-300"
             />
-            <span className="absolute bottom-1 right-1 text-xl bg-white/95 dark:bg-zinc-900/95 rounded-full p-1 shadow-md border border-white/50 backdrop-blur-sm leading-none flex items-center justify-center shrink-0">
+            <span className="absolute bottom-1 right-1 w-8 h-8 aspect-square text-lg bg-white/95 dark:bg-zinc-900/95 rounded-full p-0 shadow-md border border-white/50 backdrop-blur-sm leading-none flex items-center justify-center shrink-0 translate-y-[2px]">
               {profile.statusEmoji || '🤩'}
             </span>
           </div>
@@ -192,7 +193,8 @@ export const SidebarWidget: React.FC<SidebarWidgetProps> = ({
         {/* Bottom Custom Contact Icons & Ask AI */}
         <div className="pt-4 border-t border-white/20 flex flex-wrap items-center justify-center gap-2">
           {contactLinks.map((link) => {
-            const isMoments = link.url === 'action:moments' || link.id === 'moments';
+            const formattedUrl = formatSiteLink(link.url, profile.siteDomain);
+            const isMoments = formattedUrl === 'action:moments' || link.id === 'moments';
             
             if (isMoments) {
               return (
@@ -207,17 +209,32 @@ export const SidebarWidget: React.FC<SidebarWidgetProps> = ({
               );
             }
 
+            const isExt = isExternalLink(formattedUrl, profile.siteDomain);
+            if (!isExt && formattedUrl.startsWith('/')) {
+              const tab = formattedUrl.replace('/', '');
+              return (
+                <button
+                  key={link.id || link.name}
+                  onClick={() => onTabChange(tab || 'home')}
+                  className="p-2.5 rounded-lg bg-white/15 hover:bg-white/30 text-white border border-white/20 hover:border-white/40 transition-all shadow-2xs hover:scale-105 flex items-center justify-center cursor-pointer"
+                  title={link.name}
+                >
+                  {renderContactIcon(link.icon)}
+                </button>
+              );
+            }
+
             return (
               <a
                 key={link.id || link.name}
-                href={link.url.startsWith('http') || link.url.startsWith('mailto') ? link.url : '#'}
+                href={formattedUrl.startsWith('http') || formattedUrl.startsWith('mailto') ? formattedUrl : '#'}
                 onClick={(e) => {
-                  if (link.url.startsWith('alert:')) {
+                  if (formattedUrl.startsWith('alert:')) {
                     e.preventDefault();
-                    alert(link.url.replace('alert:', ''));
+                    alert(formattedUrl.replace('alert:', ''));
                   }
                 }}
-                target={link.url.startsWith('http') ? "_blank" : "_self"}
+                target={formattedUrl.startsWith('http') ? "_blank" : "_self"}
                 rel="noreferrer"
                 className="p-2.5 rounded-lg bg-white/15 hover:bg-white/30 text-white border border-white/20 hover:border-white/40 transition-all shadow-2xs hover:scale-105 flex items-center justify-center"
                 title={link.name}
@@ -244,17 +261,21 @@ export const SidebarWidget: React.FC<SidebarWidgetProps> = ({
 
         {/* DYNAMIC SIDEBAR PROMO CARDS */}
         {promoBlocks.map((promo) => {
+          const formattedUrl = formatSiteLink(promo.linkUrl, profile.siteDomain);
           const handleCardClick = () => {
-            if (!promo.linkUrl) return;
-            if (promo.linkUrl.startsWith('action:')) {
-              const tabName = promo.linkUrl.replace('action:', '');
+            if (!formattedUrl) return;
+            if (formattedUrl.startsWith('action:')) {
+              const tabName = formattedUrl.replace('action:', '');
               onTabChange(tabName);
-            } else if (promo.linkUrl.startsWith('alert:')) {
-              alert(promo.linkUrl.replace('alert:', ''));
-            } else if (promo.linkUrl.startsWith('http://') || promo.linkUrl.startsWith('https://')) {
-              window.open(promo.linkUrl, promo.target || '_blank', 'noopener,noreferrer');
-            } else if (promo.linkUrl.startsWith('#')) {
-              const tabName = promo.linkUrl.replace('#', '');
+            } else if (formattedUrl.startsWith('alert:')) {
+              alert(formattedUrl.replace('alert:', ''));
+            } else if (isExternalLink(formattedUrl, profile.siteDomain)) {
+              window.open(formattedUrl, promo.target || '_blank', 'noopener,noreferrer');
+            } else if (formattedUrl.startsWith('/')) {
+              const tabName = formattedUrl.replace('/', '');
+              onTabChange(tabName || 'home');
+            } else if (formattedUrl.startsWith('#')) {
+              const tabName = formattedUrl.replace('#', '');
               onTabChange(tabName);
             }
           };
@@ -381,7 +402,7 @@ export const SidebarWidget: React.FC<SidebarWidgetProps> = ({
             </span>
             <button
               onClick={() => onTabChange('articles')}
-              className="text-[11px] text-zinc-400 hover:text-indigo-600 transition-colors font-normal"
+              className="text-[11px] text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition-colors font-normal cursor-pointer"
             >
               更多
             </button>
@@ -419,7 +440,7 @@ export const SidebarWidget: React.FC<SidebarWidgetProps> = ({
             </span>
             <button
               onClick={() => onTabChange('articles')}
-              className="text-[11px] text-zinc-400 hover:text-indigo-600 transition-colors font-normal"
+              className="text-[11px] text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition-colors font-normal cursor-pointer"
             >
               更多
             </button>

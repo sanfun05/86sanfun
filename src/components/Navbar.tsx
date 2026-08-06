@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useTheme, AccentColor } from '../context/ThemeContext';
-import { Home, Search, Moon, Sun, Sparkles, Menu, X, Palette, BookOpen, Clock, FolderGit2, Monitor, Users, ShieldCheck, Shuffle, ExternalLink, ChevronDown, User, Award, Coins } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Home, Search, Moon, Sun, Sparkles, Menu, X, BookOpen, Clock, FolderGit2, Monitor, Users, ShieldCheck, Shuffle, ExternalLink, ChevronDown, User, Award, Coins } from 'lucide-react';
 import { SiteConfig, NavItem, AuthorProfile, UserMember, ModuleLayoutConfig } from '../types';
+import { formatSiteLink, isExternalLink } from '../utils/urlUtils';
 
 interface NavbarProps {
   activeTab: string;
@@ -32,9 +33,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenUserMemberModal,
   layoutConfig
 }) => {
-  const { darkMode, toggleDarkMode, accentColor, setAccentColor, accentClasses } = useTheme();
+  const { darkMode, toggleDarkMode, accentClasses } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [paletteOpen, setPaletteOpen] = useState(false);
 
   const defaultNavItems: NavItem[] = [
     { id: 'home', label: '首页', icon: 'Home' },
@@ -54,28 +54,24 @@ export const Navbar: React.FC<NavbarProps> = ({
     Monitor,
   };
 
-  const colors: { id: AccentColor; name: string; hex: string }[] = [
-    { id: 'blue', name: 'Sanfun 蓝', hex: '#3b82f6' },
-    { id: 'purple', name: '紫罗兰', hex: '#a855f7' },
-    { id: 'emerald', name: '翡翠绿', hex: '#10b981' },
-    { id: 'amber', name: '暖琥珀', hex: '#f59e0b' },
-    { id: 'rose', name: '玫瑰红', hex: '#f43f5e' },
-  ];
-
   const logoText = profile?.customLogoText || siteConfig?.logoText || siteConfig?.siteTitle || 'Sanfun';
   const logoImage = profile?.customLogoUrl || siteConfig?.logoImageUrl;
   const logoType = profile?.customLogoType || siteConfig?.logoType || (logoImage ? 'image' : 'icon');
-  const logoLink = profile?.customLogoLink;
+  const logoLink = formatSiteLink(profile?.customLogoLink, profile?.siteDomain);
 
   const handleLogoClick = () => {
     if (logoLink && logoLink.trim()) {
       const link = logoLink.trim();
-      if (link.startsWith('http://') || link.startsWith('https://')) {
+      if (isExternalLink(link, profile?.siteDomain)) {
         window.open(link, '_blank');
         return;
       } else if (link.startsWith('#')) {
         const tab = link.replace('#', '');
         if (tab) setActiveTab(tab);
+        return;
+      } else if (link.startsWith('/')) {
+        const tab = link.replace('/', '');
+        setActiveTab(tab || 'home');
         return;
       }
     }
@@ -255,47 +251,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Search Trigger Button */}
           <button
             onClick={onOpenSearch}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-            title="搜索博客内容 (Cmd+K)"
+            className="p-2 rounded-md text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+            title="搜索博客内容"
           >
-            <Search className="w-3.5 h-3.5" />
-            <span className="hidden md:inline font-mono text-[11px] bg-zinc-200/70 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-600 dark:text-zinc-400">⌘K</span>
+            <Search className="w-4 h-4" />
           </button>
-
-          {/* Accent Color Palette Popover */}
-          <div className="relative">
-            <button
-              onClick={() => setPaletteOpen(!paletteOpen)}
-              className="p-2 rounded-md text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
-              title="切换主题强调色"
-            >
-              <Palette className="w-4 h-4" />
-            </button>
-
-            {paletteOpen && (
-              <div className="absolute right-0 mt-2 w-44 p-2 bg-white dark:bg-zinc-900 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-800 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider px-2 py-1">
-                  主题强调色
-                </div>
-                <div className="grid grid-cols-5 gap-1 pt-1">
-                  {colors.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => {
-                        setAccentColor(c.id);
-                        setPaletteOpen(false);
-                      }}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${
-                        accentColor === c.id ? 'ring-2 ring-offset-2 ring-zinc-400 dark:ring-zinc-600 scale-105' : ''
-                      }`}
-                      style={{ backgroundColor: c.hex }}
-                      title={c.name}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* Dark / Light Mode Toggle */}
           <button
