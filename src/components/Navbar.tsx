@@ -99,14 +99,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               {logoText ? logoText[0].toUpperCase() : 'S'}
             </div>
           )}
-          <span className="font-black text-xl tracking-tight text-zinc-900 dark:text-zinc-100 font-sans flex items-center gap-1.5">
+          <span className="font-black text-[22px] tracking-tight text-zinc-900 dark:text-zinc-100 font-sans flex items-center gap-1.5">
             <span>{logoText}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">BLOG</span>
+            <span className="text-xs px-1.5 py-0.5 rounded-md font-bold bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">BLOG</span>
           </span>
         </div>
 
         {/* Desktop Navigation Tabs */}
-        <nav className="hidden md:flex items-center space-x-1 bg-zinc-100/80 dark:bg-zinc-900/80 p-1.5 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60">
+        <nav className="hidden md:flex items-center space-x-0.5 bg-zinc-100/80 dark:bg-zinc-900/80 p-1 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60">
           {navItems.map((item) => {
             const Icon = item.icon ? (iconMap[item.icon] || Home) : Home;
             const isActive = activeTab === item.id;
@@ -119,9 +119,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   href={item.url}
                   target={item.target || '_blank'}
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 transition-colors"
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
                   <ExternalLink className="w-3 h-3 text-zinc-400" />
                 </a>
@@ -133,13 +133,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div key={item.id} className="relative group">
                   <button
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isActive
                         ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-xs font-semibold'
                         : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50'
                     }`}
                   >
-                    <Icon className={`w-3.5 h-3.5 ${isActive ? accentClasses.text : ''}`} />
+                    <Icon className={`w-4 h-4 ${isActive ? accentClasses.text : ''}`} />
                     <span>{item.label}</span>
                     <ChevronDown className="w-3 h-3 opacity-60 group-hover:rotate-180 transition-transform" />
                   </button>
@@ -156,10 +156,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                               href={sub.url}
                               target={sub.target || '_blank'}
                               rel="noopener noreferrer"
-                              className="flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                              className="flex items-center justify-between px-3 py-1.5 rounded-lg text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors"
                             >
                               <span>{sub.label}</span>
-                              <ExternalLink className="w-3 h-3 text-zinc-400" />
+                              <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
                             </a>
                           );
                         }
@@ -167,7 +167,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           <button
                             key={sub.id || idx}
                             onClick={() => setActiveTab(sub.url || item.id)}
-                            className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors"
+                            className="w-full text-left px-3 py-1.5 rounded-lg text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors"
                           >
                             {sub.label}
                           </button>
@@ -183,13 +183,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive
                     ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-xs font-semibold'
                     : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? accentClasses.text : ''}`} />
+                <Icon className={`w-4 h-4 ${isActive ? accentClasses.text : ''}`} />
                 {item.label}
               </button>
             );
@@ -203,20 +203,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           {onRandomArticle && (
             <button
               onClick={onRandomArticle}
-              className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-md text-sm font-medium bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
               title="随机看一篇文章"
             >
-              <Shuffle className="w-3.5 h-3.5 text-zinc-500" />
-              <span className="hidden lg:inline text-[11px]">随机文章</span>
+              <Shuffle className="w-4 h-4 text-zinc-500" />
+              <span className="hidden lg:inline text-xs">随机文章</span>
             </button>
           )}
 
           {/* Ask AI Button */}
           <button
             onClick={onOpenAIChat}
-            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-white transition-all shadow-sm hover:opacity-90 active:scale-95 ${accentClasses.bg}`}
+            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-white transition-all shadow-sm hover:opacity-90 active:scale-95 ${accentClasses.bg}`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-4 h-4" />
             <span>问问 AI</span>
           </button>
 
@@ -232,17 +232,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 alt={currentUser.username}
                 className="w-5.5 h-5.5 rounded-full object-cover ring-1 ring-indigo-500 shrink-0"
               />
-              <span className="text-xs font-bold truncate max-w-[80px] hidden sm:inline">{currentUser.username}</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-500 text-white font-black shrink-0 shadow-2xs">
+              <span className="text-sm font-bold truncate max-w-[90px] hidden sm:inline">{currentUser.username}</span>
+              <span className="text-xs font-mono px-1.5 py-0.2 rounded bg-indigo-500 text-white font-black shrink-0 shadow-2xs">
                 {currentUser.level.split(' ')[0]}
               </span>
             </button>
           ) : (
             <button
               onClick={onOpenUserMemberModal}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-bold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors shadow-2xs"
             >
-              <User className="w-3.5 h-3.5" />
+              <User className="w-4 h-4" />
               <span>登录 / 注册</span>
             </button>
           )}

@@ -356,7 +356,7 @@ function BlogApp() {
                                         setSelectedCategory(cat.id === '全部文章' ? '全部' : cat.id);
                                         setCurrentPage(1);
                                       }}
-                                      className={`px-3.5 py-1.5 rounded-md text-xs font-bold whitespace-nowrap transition-all duration-200 flex items-center gap-1 ${
+                                      className={`px-4.5 py-1 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 flex items-center gap-1 ${
                                         isSelected
                                           ? 'bg-blue-600 text-white shadow-xs scale-[1.02]'
                                           : 'bg-zinc-100/90 dark:bg-zinc-800/90 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
@@ -499,9 +499,9 @@ function BlogApp() {
                             <button
                               disabled={currentPage === 1}
                               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                              className="w-8 h-8 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 disabled:opacity-40 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-center transition-colors shadow-2xs"
+                              className="w-[34px] h-[34px] rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 disabled:opacity-40 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
                             >
-                              <ChevronLeft className="w-4 h-4" />
+                              <ChevronLeft className="w-[18px] h-[18px]" />
                             </button>
 
                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -511,7 +511,7 @@ function BlogApp() {
                                 <button
                                   key={pageNum}
                                   onClick={() => setCurrentPage(pageNum)}
-                                  className={`w-8 h-8 rounded-md font-bold text-xs flex items-center justify-center transition-all ${
+                                  className={`w-[34px] h-[34px] rounded-full font-bold text-sm flex items-center justify-center transition-all cursor-pointer ${
                                     isActive
                                       ? 'bg-blue-600 text-white shadow-xs'
                                       : 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
@@ -524,10 +524,10 @@ function BlogApp() {
 
                             {totalPages > 5 && (
                               <>
-                                <span className="text-zinc-400 font-mono text-xs px-1">...</span>
+                                <span className="text-zinc-400 font-mono text-sm px-1">...</span>
                                 <button
                                   onClick={() => setCurrentPage(totalPages)}
-                                  className={`w-8 h-8 rounded-md font-bold text-xs flex items-center justify-center transition-all ${
+                                  className={`w-[34px] h-[34px] rounded-full font-bold text-sm flex items-center justify-center transition-all cursor-pointer ${
                                     currentPage === totalPages
                                       ? 'bg-blue-600 text-white shadow-xs'
                                       : 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
@@ -541,9 +541,9 @@ function BlogApp() {
                             <button
                               disabled={currentPage === totalPages}
                               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                              className="w-8 h-8 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 disabled:opacity-40 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-center transition-colors shadow-2xs"
+                              className="w-[34px] h-[34px] rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 disabled:opacity-40 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
                             >
-                              <ChevronRight className="w-4 h-4" />
+                              <ChevronRight className="w-[18px] h-[18px]" />
                             </button>
                           </div>
                         )}

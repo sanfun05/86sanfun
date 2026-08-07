@@ -404,13 +404,13 @@ export const BentoHeader: React.FC<BentoHeaderProps> = ({
                   onSelectTag(null);
                 }
               }}
-              className={`px-3.5 py-2 rounded-md text-xs font-bold whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 shrink-0 shadow-2xs ${
+              className={`px-4.5 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 shrink-0 shadow-2xs ${
                 isSelected
                   ? 'bg-blue-600 text-white shadow-md scale-105'
                   : 'bg-white/90 dark:bg-zinc-900/90 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800/80'
               }`}
             >
-              {IconComp && <IconComp className="w-3.5 h-3.5 shrink-0" />}
+              {IconComp && <IconComp className="w-4 h-4 shrink-0" />}
               <span>{pill.label}</span>
             </button>
           );
