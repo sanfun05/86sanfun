@@ -18,6 +18,7 @@ import { PanoramaViewer } from './PanoramaViewer';
 import { ThreeDViewer } from './ThreeDViewer';
 import { ImageCropperModal } from './ImageCropperModal';
 import { formatSiteLink } from '../utils/urlUtils';
+import { generatePinyinSlug, getArticlePaths } from '../utils/pinyin';
 import { AdminMembersManager } from './admin/AdminMembersManager';
 import { AdminTiersManager } from './admin/AdminTiersManager';
 import { AdminMessagesManager } from './admin/AdminMessagesManager';
@@ -278,6 +279,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   // Form states for creating/editing article
   const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
+  const [customSlug, setCustomSlug] = useState('');
   const [category, setCategory] = useState(categories[0] || '产品设计');
   const [tags, setTags] = useState('Bento Grid, UI 设计');
   const [coverImage, setCoverImage] = useState('');
@@ -1460,6 +1462,7 @@ export async function getStaticProps() {
   const handleStartNewArticle = () => {
     setEditingArticleId(null);
     setTitle('');
+    setCustomSlug('');
     setCategory(categories[0] || '产品设计');
     setTags('Bento Grid, UI 设计');
     setCoverImage('');
@@ -1485,6 +1488,7 @@ export async function getStaticProps() {
   const handleEditArticleClick = (art: Article) => {
     setEditingArticleId(art.id);
     setTitle(art.title);
+    setCustomSlug(art.slug || generatePinyinSlug(art.title, art.date));
     setCategory(art.category);
     setTags(art.tags.join(', '));
     setCoverImage(art.coverImage || '');
@@ -1513,9 +1517,11 @@ export async function getStaticProps() {
 
     setSubmitting(true);
     const tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
+    const effectiveSlug = customSlug.trim() || generatePinyinSlug(title);
 
     const articlePayload = {
       title,
+      slug: effectiveSlug,
       category,
       tags: tagArray,
       coverImage,
@@ -2623,6 +2629,44 @@ export async function getStaticProps() {
                               <span>•</span>
                               <span>{art.date}</span>
                             </div>
+
+                            {/* Paths Preview & Quick Copy */}
+                            <div className="mt-1.5 pt-1.5 border-t border-zinc-200/60 dark:border-zinc-700/50 flex flex-col gap-1 text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="truncate select-all text-zinc-600 dark:text-zinc-400">
+                                  <span className="font-sans font-semibold text-zinc-400 mr-1">相对:</span>
+                                  {getArticlePaths(art).relativePath}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(getArticlePaths(art).relativePath);
+                                    showToast('已复制相对路径');
+                                  }}
+                                  className="text-indigo-600 dark:text-indigo-400 hover:underline shrink-0 text-[9px] font-sans font-bold"
+                                >
+                                  复制相对
+                                </button>
+                              </div>
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="truncate select-all text-zinc-600 dark:text-zinc-400">
+                                  <span className="font-sans font-semibold text-zinc-400 mr-1">绝对:</span>
+                                  {getArticlePaths(art).absolutePath}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(getArticlePaths(art).absolutePath);
+                                    showToast('已复制绝对路径');
+                                  }}
+                                  className="text-indigo-600 dark:text-indigo-400 hover:underline shrink-0 text-[9px] font-sans font-bold"
+                                >
+                                  复制绝对
+                                </button>
+                              </div>
+                            </div>
                           </div>
 
                           <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 shrink-0">
@@ -2699,10 +2743,89 @@ export async function getStaticProps() {
                               type="text"
                               required
                               value={title}
-                              onChange={(e) => setTitle(e.target.value)}
+                              onChange={(e) => {
+                                const newTitle = e.target.value;
+                                setTitle(newTitle);
+                                // Auto-calculate pinyin slug if user hasn't explicitly edited customSlug or if customSlug is empty
+                                if (!customSlug) {
+                                  setCustomSlug(generatePinyinSlug(newTitle));
+                                }
+                              }}
                               placeholder="如：设计 Sanfun 式 Bento 栅格组件库..."
                               className="w-full bg-zinc-50 dark:bg-zinc-800/80 p-2.5 rounded-md text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 mt-1 font-bold"
                             />
+                          </div>
+
+                          {/* Pinyin Slug & Path Management Field */}
+                          <div className="p-3 bg-zinc-50/80 dark:bg-zinc-800/40 rounded-lg border border-zinc-200/80 dark:border-zinc-700/80 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase flex items-center gap-1.5">
+                                <span className="px-1.5 py-0.2 rounded bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 font-mono text-[10px]">拼音命名规则</span>
+                                <span>文章拼音别名与路径 (前3字拼音+年月日)</span>
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const autoPinyin = generatePinyinSlug(title);
+                                  setCustomSlug(autoPinyin);
+                                  showToast(`已重置拼音别名: ${autoPinyin}`);
+                                }}
+                                className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                                <span>按标题前3字重新计算</span>
+                              </button>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-mono font-bold text-zinc-400 dark:text-zinc-500 shrink-0">slug:</span>
+                              <input
+                                type="text"
+                                value={customSlug || generatePinyinSlug(title)}
+                                onChange={(e) => setCustomSlug(e.target.value)}
+                                placeholder="例如: baocuohui20260805"
+                                className="flex-1 bg-white dark:bg-zinc-900 p-2 rounded text-xs font-mono text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                              />
+                            </div>
+
+                            {/* Paths display and copy buttons */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 pt-1">
+                              <div className="flex items-center justify-between bg-white dark:bg-zinc-900 px-2 py-1.5 rounded border border-zinc-200/60 dark:border-zinc-800">
+                                <span className="truncate">
+                                  <span className="font-sans font-semibold text-zinc-400 mr-1">相对:</span>
+                                  /article/{customSlug || generatePinyinSlug(title)}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const rel = `/article/${customSlug || generatePinyinSlug(title)}`;
+                                    navigator.clipboard.writeText(rel);
+                                    showToast('相对路径已复制');
+                                  }}
+                                  className="text-indigo-600 dark:text-indigo-400 hover:underline font-sans font-bold text-[10px] ml-1 shrink-0"
+                                >
+                                  复制
+                                </button>
+                              </div>
+
+                              <div className="flex items-center justify-between bg-white dark:bg-zinc-900 px-2 py-1.5 rounded border border-zinc-200/60 dark:border-zinc-800">
+                                <span className="truncate">
+                                  <span className="font-sans font-semibold text-zinc-400 mr-1">绝对:</span>
+                                  {getArticlePaths({ title, date: new Date().toISOString().substring(0, 10), slug: customSlug || generatePinyinSlug(title) } as any).absolutePath}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const abs = getArticlePaths({ title, date: new Date().toISOString().substring(0, 10), slug: customSlug || generatePinyinSlug(title) } as any).absolutePath;
+                                    navigator.clipboard.writeText(abs);
+                                    showToast('绝对路径已复制');
+                                  }}
+                                  className="text-indigo-600 dark:text-indigo-400 hover:underline font-sans font-bold text-[10px] ml-1 shrink-0"
+                                >
+                                  复制
+                                </button>
+                              </div>
+                            </div>
                           </div>
 
                           <div className="grid grid-cols-2 gap-3 items-start">

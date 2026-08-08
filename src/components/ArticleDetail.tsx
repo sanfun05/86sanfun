@@ -7,6 +7,7 @@ import { PanoramaViewer } from './PanoramaViewer';
 import { ThreeDViewer } from './ThreeDViewer';
 import { SidebarWidget } from './SidebarWidget';
 import { authorProfile as defaultProfile, sampleMoments } from '../data/blogData';
+import { getArticlePaths } from '../utils/pinyin';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -351,41 +352,13 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
     }
   };
 
-  const getArticleFullUrl = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('article', article.id || article.slug);
-    return url.toString();
-  };
-
-  const getArticleRelativeUrl = () => {
-    const artKey = article.id || article.slug;
-    const pathname = window.location.pathname || '/';
-    return `${pathname}?article=${encodeURIComponent(artKey)}`;
-  };
-
-  const handleCopyFullUrl = (e?: React.MouseEvent) => {
+  const handleCopyShareUrl = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    const fullUrl = getArticleFullUrl();
-    navigator.clipboard.writeText(fullUrl);
-    setCopiedType('full');
+    const shareUrl = getArticlePaths(article).siteUrl;
+    navigator.clipboard.writeText(shareUrl);
     setCopiedLink(true);
-    setShareMenuOpen(false);
     setTimeout(() => {
       setCopiedLink(false);
-      setCopiedType(null);
-    }, 2000);
-  };
-
-  const handleCopyRelativeUrl = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    const relativeUrl = getArticleRelativeUrl();
-    navigator.clipboard.writeText(relativeUrl);
-    setCopiedType('relative');
-    setCopiedLink(true);
-    setShareMenuOpen(false);
-    setTimeout(() => {
-      setCopiedLink(false);
-      setCopiedType(null);
     }, 2000);
   };
 
@@ -439,75 +412,15 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({
           <span>返回文章列表</span>
         </button>
 
-        <div className="flex items-center gap-2 relative">
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleCopyFullUrl}
+            onClick={handleCopyShareUrl}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-zinc-700 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shadow-2xs cursor-pointer active:scale-95"
-            title="默认复制完整文章链接"
+            title={`复制分享地址: ${getArticlePaths(article).siteUrl}`}
           >
             {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
-            <span>
-              {copiedLink 
-                ? (copiedType === 'relative' ? '已复制相对路径' : '已复制完整链接') 
-                : '分享本篇'
-              }
-            </span>
+            <span>{copiedLink ? '已复制链接' : '分享本篇'}</span>
           </button>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShareMenuOpen(prev => !prev);
-            }}
-            className="p-1.5 rounded-xl text-xs font-medium bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-zinc-700 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shadow-2xs cursor-pointer"
-            title="展开分享选项 (复制相对路径 / 完整网址)"
-          >
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${shareMenuOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {shareMenuOpen && (
-            <>
-              <div className="fixed inset-0 z-20" onClick={() => setShareMenuOpen(false)} />
-              
-              <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800/90 rounded-xl shadow-xl p-2 z-30 text-xs animate-in fade-in zoom-in-95 duration-150 space-y-1">
-                <div className="px-2 py-1 font-bold text-zinc-400 dark:text-zinc-500 text-[10px] uppercase tracking-wider">
-                  分享本篇文章地址
-                </div>
-
-                <button
-                  onClick={handleCopyFullUrl}
-                  className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex flex-col gap-0.5 transition-colors cursor-pointer group"
-                >
-                  <div className="flex items-center justify-between font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                    <span className="flex items-center gap-1.5">
-                      <Share2 className="w-3.5 h-3.5 text-indigo-500" />
-                      复制完整网页 URL
-                    </span>
-                    <Copy className="w-3.5 h-3.5 text-zinc-400 group-hover:text-indigo-500" />
-                  </div>
-                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono truncate pl-5">
-                    {getArticleFullUrl()}
-                  </span>
-                </button>
-
-                <button
-                  onClick={handleCopyRelativeUrl}
-                  className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex flex-col gap-0.5 transition-colors cursor-pointer group border-t border-zinc-100 dark:border-zinc-800/60 pt-2"
-                >
-                  <div className="flex items-center justify-between font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                    <span className="flex items-center gap-1.5">
-                      <LinkIcon className="w-3.5 h-3.5 text-emerald-500" />
-                      复制相对路径页面地址
-                    </span>
-                    <Copy className="w-3.5 h-3.5 text-zinc-400 group-hover:text-indigo-500" />
-                  </div>
-                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono truncate pl-5">
-                    {getArticleRelativeUrl()}
-                  </span>
-                </button>
-              </div>
-            </>
-          )}
         </div>
       </div>
 

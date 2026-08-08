@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Article } from '../types';
 import { useTheme } from '../context/ThemeContext';
-import { Heart, Sparkles, Clock } from 'lucide-react';
+import { Heart, Sparkles, Clock, Copy, Check, Link as LinkIcon } from 'lucide-react';
+import { getArticlePaths } from '../utils/pinyin';
 
 interface ArticleCardProps {
   article: Article;
@@ -10,6 +11,16 @@ interface ArticleCardProps {
 
 export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onClick }) => {
   const { accentClasses } = useTheme();
+  const [copiedType, setCopiedType] = useState<'rel' | 'abs' | null>(null);
+
+  const { relativePath, absolutePath } = getArticlePaths(article);
+
+  const handleCopyPath = (e: React.MouseEvent, text: string, type: 'rel' | 'abs') => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setCopiedType(type);
+    setTimeout(() => setCopiedType(null), 1800);
+  };
 
   // Default soft desaturated gradients matching Sanfun design aesthetic
   const gradientBgs = [
@@ -121,6 +132,44 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onClick }) =>
                 #{t.replace(/^#/, '')}
               </span>
             ))}
+          </div>
+
+          {/* Paths Bar (Relative & Absolute Path for Easy Management) */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="mt-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800/60 flex flex-col gap-1 text-[11px] font-mono text-zinc-500 dark:text-zinc-400"
+          >
+            <div className="flex items-center justify-between gap-1 group/rel">
+              <span className="truncate select-all text-zinc-600 dark:text-zinc-400 text-[10.5px]" title={`相对路径: ${relativePath}`}>
+                <span className="font-sans font-semibold text-zinc-400 dark:text-zinc-500 mr-1 shrink-0">相对:</span>
+                {relativePath}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => handleCopyPath(e, relativePath, 'rel')}
+                className="shrink-0 px-1.5 py-0.5 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 text-[10px] font-sans flex items-center gap-0.5 transition-colors"
+                title="复制相对路径"
+              >
+                {copiedType === 'rel' ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5" />}
+                <span>{copiedType === 'rel' ? '已复制' : '复制'}</span>
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between gap-1 group/abs">
+              <span className="truncate select-all text-zinc-500 dark:text-zinc-400 text-[10.5px]" title={`绝对路径: ${absolutePath}`}>
+                <span className="font-sans font-semibold text-zinc-400 dark:text-zinc-500 mr-1 shrink-0">绝对:</span>
+                {absolutePath}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => handleCopyPath(e, absolutePath, 'abs')}
+                className="shrink-0 px-1.5 py-0.5 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 text-[10px] font-sans flex items-center gap-0.5 transition-colors"
+                title="复制绝对路径"
+              >
+                {copiedType === 'abs' ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5" />}
+                <span>{copiedType === 'abs' ? '已复制' : '复制'}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

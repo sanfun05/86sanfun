@@ -99,7 +99,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {logoText ? logoText[0].toUpperCase() : 'S'}
             </div>
           )}
-          <span className="font-black text-[22px] tracking-tight text-zinc-900 dark:text-zinc-100 font-sans flex items-center gap-1.5">
+          <span className="font-black text-[22px] tracking-tight text-zinc-700 dark:text-zinc-300 font-sans flex items-center gap-1.5">
             <span>{logoText}</span>
             <span className="text-xs px-1.5 py-0.5 rounded-md font-bold bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">BLOG</span>
           </span>

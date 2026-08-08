@@ -19,6 +19,7 @@ import { Footer } from './components/Footer';
 import { SidebarWidget } from './components/SidebarWidget';
 import { Article, Moment, Project, EquipmentItem, FriendLink, AuthorProfile, SiteConfig, NavItem, ModuleLayoutConfig, UserMember } from './types';
 import { authorProfile as defaultProfile, sampleArticles, sampleMoments, sampleProjects, sampleEquipment, sampleFriends } from './data/blogData';
+import { generatePinyinSlug } from './utils/pinyin';
 import { BookOpen, Search, Sparkles, Filter, Tag, LayoutGrid, List, ChevronLeft, ChevronRight } from 'lucide-react';
 
 function BlogApp() {
@@ -187,8 +188,14 @@ function BlogApp() {
     if (articles.length === 0) return;
 
     const parseAndSetArticle = () => {
+      const pathname = window.location.pathname;
+      let pathKey = '';
+      if (pathname.includes('/article/')) {
+        pathKey = pathname.split('/article/')[1]?.split('/')[0] || '';
+      }
+
       const params = new URLSearchParams(window.location.search);
-      let artId = params.get('article') || params.get('id') || params.get('articleId');
+      let artId = pathKey || params.get('article') || params.get('id') || params.get('articleId');
       if (!artId && window.location.hash) {
         const hash = window.location.hash.replace('#', '');
         if (hash.startsWith('article=')) {
@@ -210,8 +217,14 @@ function BlogApp() {
     parseAndSetArticle();
 
     const handlePopState = () => {
+      const pathname = window.location.pathname;
+      let pathKey = '';
+      if (pathname.includes('/article/')) {
+        pathKey = pathname.split('/article/')[1]?.split('/')[0] || '';
+      }
+
       const params = new URLSearchParams(window.location.search);
-      let artId = params.get('article') || params.get('id') || params.get('articleId');
+      let artId = pathKey || params.get('article') || params.get('id') || params.get('articleId');
       if (artId) {
         const found = articles.find(a => a.id === artId || a.slug === artId);
         if (found) {
@@ -232,8 +245,9 @@ function BlogApp() {
     try {
       const url = new URL(window.location.href);
       if (selectedArticle) {
-        if (url.searchParams.get('article') !== selectedArticle.id) {
-          url.searchParams.set('article', selectedArticle.id);
+        const targetSlug = selectedArticle.slug || generatePinyinSlug(selectedArticle.title, selectedArticle.date);
+        if (url.searchParams.get('article') !== targetSlug) {
+          url.searchParams.set('article', targetSlug);
           window.history.replaceState({}, '', url.toString());
         }
       } else {

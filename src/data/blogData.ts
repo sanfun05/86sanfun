@@ -1,4 +1,5 @@
 import { Article, Moment, Project, EquipmentItem, FriendLink, AuthorProfile } from '../types';
+import { generatePinyinSlug } from '../utils/pinyin';
 
 export const authorProfile: AuthorProfile = {
   name: "三疯Sanfun",
@@ -44,7 +45,7 @@ export const authorProfile: AuthorProfile = {
   ]
 };
 
-export const sampleArticles: Article[] = [
+const rawSampleArticles: Article[] = [
   {
     id: "art-1",
     title: "报错回顾：给OpenClaw添加错误行为记忆机制，让自己写的skill不断成长",
@@ -910,6 +911,11 @@ curl -s -X POST https://api.sanfun.net/api/openclaw/review \\
     comments: []
   }
 ];
+
+export const sampleArticles: Article[] = rawSampleArticles.map(a => ({
+  ...a,
+  slug: generatePinyinSlug(a.title, a.date)
+}));
 
 export const sampleMoments: Moment[] = [
   {

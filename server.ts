@@ -5,6 +5,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import { sampleArticles, sampleMoments, sampleProjects, sampleEquipment, sampleFriends, authorProfile } from "./src/data/blogData.js";
+import { generatePinyinSlug } from "./src/utils/pinyin.js";
 
 dotenv.config();
 
@@ -1117,7 +1118,8 @@ app.post("/api/articles", (req, res) => {
   }
 
   const id = `post_${Date.now()}`;
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || id;
+  const dateStr = req.body.date || new Date().toISOString().substring(0, 10);
+  const slug = req.body.slug || generatePinyinSlug(title, dateStr);
 
   const newArticle = {
     id,
