@@ -123,7 +123,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     <div className="w-full max-w-[1440px] mx-auto pb-12 font-sans">
       
       {/* 2-Column Grid Layout (Matches Homepage Width & Sidebar) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start my-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start mb-6">
         
         {/* Left Column: Friends Header & Cards (Span 9) */}
         <div className="lg:col-span-9 space-y-3">

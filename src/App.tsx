@@ -182,6 +182,73 @@ function BlogApp() {
     fetch('/api/friends').then(r => r.json()).then(setFriends).catch(() => {});
   }, []);
 
+  // Sync article query parameters and deep link handling
+  useEffect(() => {
+    if (articles.length === 0) return;
+
+    const parseAndSetArticle = () => {
+      const params = new URLSearchParams(window.location.search);
+      let artId = params.get('article') || params.get('id') || params.get('articleId');
+      if (!artId && window.location.hash) {
+        const hash = window.location.hash.replace('#', '');
+        if (hash.startsWith('article=')) {
+          artId = hash.replace('article=', '');
+        } else if (hash.startsWith('article-')) {
+          artId = hash.replace('article-', '');
+        }
+      }
+
+      if (artId) {
+        const found = articles.find(a => a.id === artId || a.slug === artId);
+        if (found) {
+          setSelectedArticle(found);
+          setActiveTab('articles');
+        }
+      }
+    };
+
+    parseAndSetArticle();
+
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      let artId = params.get('article') || params.get('id') || params.get('articleId');
+      if (artId) {
+        const found = articles.find(a => a.id === artId || a.slug === artId);
+        if (found) {
+          setSelectedArticle(found);
+          setActiveTab('articles');
+          return;
+        }
+      }
+      setSelectedArticle(null);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [articles]);
+
+  // Synchronize URL search params with current selected article state
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (selectedArticle) {
+        if (url.searchParams.get('article') !== selectedArticle.id) {
+          url.searchParams.set('article', selectedArticle.id);
+          window.history.replaceState({}, '', url.toString());
+        }
+      } else {
+        if (url.searchParams.has('article') || url.searchParams.has('id') || url.searchParams.has('articleId')) {
+          url.searchParams.delete('article');
+          url.searchParams.delete('id');
+          url.searchParams.delete('articleId');
+          window.history.replaceState({}, '', url.toString());
+        }
+      }
+    } catch (e) {
+      console.error('Failed to sync URL state', e);
+    }
+  }, [selectedArticle]);
+
   // Update default view mode on tab switch
   useEffect(() => {
     if (activeTab === 'home') {
@@ -227,6 +294,11 @@ function BlogApp() {
   const handleArticleClick = (article: Article) => {
     setSelectedArticle(article);
     setActiveTab('articles');
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('article', article.id);
+      window.history.pushState({}, '', url.toString());
+    } catch (e) {}
   };
 
   const handleRandomArticle = () => {
@@ -263,7 +335,7 @@ function BlogApp() {
           layoutConfig={layoutConfig}
         />
 
-        <main className={`${layoutConfig.enableAdaptiveWidth === false ? 'max-w-6xl' : (layoutConfig.adaptiveMaxWidth || 'max-w-[1440px]')} w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 transition-all duration-300`}>
+        <main className={`${layoutConfig.enableAdaptiveWidth === false ? 'max-w-6xl' : (layoutConfig.adaptiveMaxWidth || 'max-w-[1440px]')} w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5 transition-all duration-300`}>
           
           <AnimatePresence mode="wait">
             {/* Detailed Article Reader View */}
@@ -335,7 +407,7 @@ function BlogApp() {
                     )}
 
                     {/* Sanfun Layout Grid (Main Content + Right Sidebar) */}
-                    <div className={`grid grid-cols-1 lg:grid-cols-12 gap-3 ${activeTab === 'home' ? 'mt-3 mb-6' : 'my-6'}`}>
+                    <div className={`grid grid-cols-1 lg:grid-cols-12 gap-3 ${activeTab === 'home' && layoutConfig.showBentoHeader !== false ? 'mt-3 mb-6' : 'mb-6'}`}>
                       
                       {/* Left Main Article Column (Span 9 or Span 12 based on sidebar toggle) */}
                       <div className={layoutConfig.showSidebar !== false ? "lg:col-span-9 space-y-3" : "lg:col-span-12 space-y-3"}>
@@ -407,7 +479,7 @@ function BlogApp() {
                                       setSelectedYear(yr);
                                       setCurrentPage(1);
                                     }}
-                                    className={`px-3 py-1 rounded-md text-[11px] font-semibold whitespace-nowrap transition-all ${
+                                    className={`px-3 py-1 rounded-md text-[13px] font-semibold whitespace-nowrap transition-all ${
                                       isSelected
                                         ? 'bg-blue-600 text-white shadow-xs'
                                         : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
@@ -630,6 +702,7 @@ function BlogApp() {
                   >
                     <EquipmentView
                       equipment={equipment}
+                      projects={projects}
                     />
                   </motion.div>
                 )}
@@ -704,6 +777,7 @@ function BlogApp() {
         articles={articles}
         categories={categories}
         equipment={equipment}
+        projects={projects}
         moments={moments}
         profile={profile}
         siteConfig={siteConfig}
@@ -716,6 +790,9 @@ function BlogApp() {
         onEquipmentCreated={(newItem) => setEquipment(prev => [newItem, ...prev])}
         onEquipmentUpdated={(updatedItem) => setEquipment(prev => prev.map(e => e.id === updatedItem.id ? updatedItem : e))}
         onEquipmentDeleted={(id) => setEquipment(prev => prev.filter(e => e.id !== id))}
+        onProjectCreated={(newProj) => setProjects(prev => [newProj, ...prev])}
+        onProjectUpdated={(updatedProj) => setProjects(prev => prev.map(p => p.id === updatedProj.id ? updatedProj : p))}
+        onProjectDeleted={(id) => setProjects(prev => prev.filter(p => p.id !== id))}
         onMomentCreated={(newMom) => setMoments(prev => [newMom, ...prev])}
         onMomentUpdated={(updatedMom) => setMoments(prev => prev.map(m => m.id === updatedMom.id ? updatedMom : m))}
         onMomentDeleted={(id) => setMoments(prev => prev.filter(m => m.id !== id))}

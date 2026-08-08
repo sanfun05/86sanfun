@@ -96,6 +96,7 @@ if (process.env.GEMINI_API_KEY) {
 let articles = [...sampleArticles];
 let moments = [...sampleMoments];
 let equipment = [...sampleEquipment];
+let projects = [...sampleProjects];
 let categories = ["产品设计", "AI 与技术", "前端工程", "生活与思考"];
 
 let siteConfig = {
@@ -1306,7 +1307,63 @@ app.delete("/api/moments/:id", (req, res) => {
 
 // Get Projects
 app.get("/api/projects", (req, res) => {
-  res.json(sampleProjects);
+  res.json(projects);
+});
+
+// Create Project
+app.post("/api/projects", (req, res) => {
+  const { name, category, description, coverImage, tags, stars, githubUrl, demoUrl } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: "项目名称为必填项" });
+  }
+
+  const newProject = {
+    id: `proj_${Date.now()}`,
+    name: name.trim(),
+    category: category || "Web 应用",
+    description: description || "专为用户设计的实用独立项目",
+    coverImage: coverImage || "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
+    tags: Array.isArray(tags) ? tags : (typeof tags === 'string' ? tags.split(',').map((t: string) => t.trim()).filter(Boolean) : []),
+    stars: stars !== undefined ? Number(stars) : 0,
+    githubUrl: githubUrl || "",
+    demoUrl: demoUrl || ""
+  };
+
+  projects.unshift(newProject);
+  res.status(201).json(newProject);
+});
+
+// Update Project
+app.put("/api/projects/:id", (req, res) => {
+  const index = projects.findIndex(p => p.id === req.params.id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Project not found" });
+  }
+
+  const existing = projects[index];
+  const updates = req.body;
+
+  if (updates.tags && typeof updates.tags === 'string') {
+    updates.tags = updates.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+  }
+
+  projects[index] = {
+    ...existing,
+    ...updates,
+    stars: updates.stars !== undefined ? Number(updates.stars) : existing.stars
+  };
+
+  res.json(projects[index]);
+});
+
+// Delete Project
+app.delete("/api/projects/:id", (req, res) => {
+  const index = projects.findIndex(p => p.id === req.params.id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Project not found" });
+  }
+  const deleted = projects.splice(index, 1);
+  res.json({ message: "Project deleted successfully", deleted: deleted[0] });
 });
 
 // Get Equipment

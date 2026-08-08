@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Article, Moment, AuthorProfile, EquipmentItem, SiteConfig, NavItem, ModuleLayoutConfig, SidebarPromoBlock, ArticleAttachment, NetdiskLink, MusicTrackInfo } from '../types';
+import { Article, Moment, AuthorProfile, EquipmentItem, Project, SiteConfig, NavItem, ModuleLayoutConfig, SidebarPromoBlock, ArticleAttachment, NetdiskLink, MusicTrackInfo } from '../types';
 import { useTheme } from '../context/ThemeContext';
 import { 
   X, Plus, Edit, Trash2, Save, Sparkles, FileText, MessageSquare, 
@@ -7,7 +7,8 @@ import {
   FolderPlus, Tag, Monitor, Laptop, Keyboard, Smartphone, Camera, Headphones, Layout, Code, Star, CheckCircle2,
   Check, Copy, AlertCircle, Lightbulb, AlertTriangle, Rocket, PartyPopper, ChevronDown, Quote, Table, ListOrdered, FileCode, LayoutTemplate, CopyCheck, Wand2, Image as ImageIcon,
   Bold, Italic, Underline, Strikethrough, Link as LinkIcon, List as ListIcon, CheckSquare, AlignLeft, AlignCenter, AlignRight, Type, Palette, Smile, Terminal, Upload, Columns, Split, ImagePlus, Box, Compass, Globe, Layers, Crop,
-  Maximize2, Minimize2, Minus, ArrowUp, ArrowDown, Cloud, HardDrive, Paperclip, Coins, Download, Key, Music, Disc, Radio, Clock
+  Maximize2, Minimize2, Minus, ArrowUp, ArrowDown, Cloud, HardDrive, Paperclip, Coins, Download, Key, Music, Disc, Radio, Clock,
+  FolderGit2, Github, ExternalLink
 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -28,6 +29,7 @@ interface AdminModalProps {
   articles: Article[];
   categories: string[];
   equipment: EquipmentItem[];
+  projects?: Project[];
   moments: Moment[];
   profile: AuthorProfile;
   siteConfig?: SiteConfig;
@@ -40,6 +42,9 @@ interface AdminModalProps {
   onEquipmentCreated: (newItem: EquipmentItem) => void;
   onEquipmentUpdated: (updatedItem: EquipmentItem) => void;
   onEquipmentDeleted: (equipmentId: string) => void;
+  onProjectCreated?: (newProject: Project) => void;
+  onProjectUpdated?: (updatedProject: Project) => void;
+  onProjectDeleted?: (projectId: string) => void;
   onMomentCreated: (newMoment: Moment) => void;
   onMomentUpdated?: (updatedMoment: Moment) => void;
   onMomentDeleted: (momentId: string) => void;
@@ -55,6 +60,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   articles,
   categories,
   equipment,
+  projects = [],
   moments,
   profile,
   siteConfig,
@@ -67,6 +73,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   onEquipmentCreated,
   onEquipmentUpdated,
   onEquipmentDeleted,
+  onProjectCreated,
+  onProjectUpdated,
+  onProjectDeleted,
   onMomentCreated,
   onMomentUpdated,
   onMomentDeleted,
@@ -1008,7 +1017,8 @@ export async function getStaticProps() {
   const [editingCatOldName, setEditingCatOldName] = useState<string | null>(null);
   const [editingCatNewName, setEditingCatNewName] = useState('');
 
-  // Equipment management states
+  // Equipment & Mine management subtab and states
+  const [mineSubTab, setMineSubTab] = useState<'equipment' | 'projects'>('equipment');
   const [editingEqId, setEditingEqId] = useState<string | null>(null);
   const [eqName, setEqName] = useState('');
   const [eqCategory, setEqCategory] = useState('核心硬件');
@@ -1018,6 +1028,22 @@ export async function getStaticProps() {
   const [eqStatus, setEqStatus] = useState('主力使用');
   const [eqImageUrl, setEqImageUrl] = useState('');
   const [eqLink, setEqLink] = useState('');
+
+  // Project management states
+  const [localProjects, setLocalProjects] = useState<Project[]>(projects);
+  const [editingProjId, setEditingProjId] = useState<string | null>(null);
+  const [projName, setProjName] = useState('');
+  const [projCategory, setProjCategory] = useState('Web 应用');
+  const [projDescription, setProjDescription] = useState('');
+  const [projCoverImage, setProjCoverImage] = useState('');
+  const [projTagsStr, setProjTagsStr] = useState('React, TypeScript');
+  const [projStars, setProjStars] = useState<number>(0);
+  const [projGithubUrl, setProjGithubUrl] = useState('');
+  const [projDemoUrl, setProjDemoUrl] = useState('');
+
+  useEffect(() => {
+    if (projects) setLocalProjects(projects);
+  }, [projects]);
 
   // Form states for moment
   const [editingMomentId, setEditingMomentId] = useState<string | null>(null);
@@ -1734,6 +1760,119 @@ export async function getStaticProps() {
     }
   };
 
+  // Project management handlers
+  const handleStartNewProject = () => {
+    setEditingProjId(null);
+    setProjName('');
+    setProjCategory('Web 应用');
+    setProjDescription('');
+    setProjCoverImage('');
+    setProjTagsStr('React, TypeScript');
+    setProjStars(0);
+    setProjGithubUrl('');
+    setProjDemoUrl('');
+  };
+
+  const handleEditProjectClick = (p: Project) => {
+    setEditingProjId(p.id);
+    setProjName(p.name);
+    setProjCategory(p.category || 'Web 应用');
+    setProjDescription(p.description || '');
+    setProjCoverImage(p.coverImage || '');
+    setProjTagsStr(Array.isArray(p.tags) ? p.tags.join(', ') : '');
+    setProjStars(p.stars || 0);
+    setProjGithubUrl(p.githubUrl || '');
+    setProjDemoUrl(p.demoUrl || '');
+  };
+
+  const handleSaveProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!projName.trim()) return;
+
+    const tagsArray = projTagsStr.split(',').map(t => t.trim()).filter(Boolean);
+
+    try {
+      if (editingProjId) {
+        const res = await fetch(`/api/projects/${editingProjId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: projName,
+            category: projCategory,
+            description: projDescription,
+            coverImage: projCoverImage,
+            tags: tagsArray,
+            stars: projStars,
+            githubUrl: projGithubUrl,
+            demoUrl: projDemoUrl
+          })
+        });
+        const updated = res.ok ? await res.json() : {
+          id: editingProjId,
+          name: projName,
+          category: projCategory,
+          description: projDescription,
+          coverImage: projCoverImage,
+          tags: tagsArray,
+          stars: projStars,
+          githubUrl: projGithubUrl,
+          demoUrl: projDemoUrl
+        };
+        setLocalProjects(prev => prev.map(p => p.id === editingProjId ? updated : p));
+        if (onProjectUpdated) onProjectUpdated(updated);
+        showToast(`项目「${projName}」修改成功！`);
+      } else {
+        const res = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: projName,
+            category: projCategory,
+            description: projDescription,
+            coverImage: projCoverImage,
+            tags: tagsArray,
+            stars: projStars,
+            githubUrl: projGithubUrl,
+            demoUrl: projDemoUrl
+          })
+        });
+        const created = res.ok ? await res.json() : {
+          id: `proj_${Date.now()}`,
+          name: projName,
+          category: projCategory,
+          description: projDescription,
+          coverImage: projCoverImage,
+          tags: tagsArray,
+          stars: projStars,
+          githubUrl: projGithubUrl,
+          demoUrl: projDemoUrl
+        };
+        setLocalProjects(prev => [created, ...prev]);
+        if (onProjectCreated) onProjectCreated(created);
+        showToast(`成功添加新项目「${projName}」！`);
+      }
+      handleStartNewProject();
+    } catch (e) {
+      console.error(e);
+      showToast('操作项目失败，请重试');
+    }
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    if (!confirm('确定要彻底删除该项目吗？')) return;
+    try {
+      await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+      setLocalProjects(prev => prev.filter(p => p.id !== id));
+      if (onProjectDeleted) onProjectDeleted(id);
+      showToast('项目已彻底删除');
+      if (editingProjId === id) handleStartNewProject();
+    } catch (e) {
+      console.error(e);
+      setLocalProjects(prev => prev.filter(p => p.id !== id));
+      if (onProjectDeleted) onProjectDeleted(id);
+    }
+  };
+
   // Moment handlers (Publish & Edit)
   const handleSaveMoment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2277,7 +2416,7 @@ export async function getStaticProps() {
                 }`}
               >
                 <Monitor className="w-3.5 h-3.5 text-purple-500" />
-                <span>硬件装备 ({equipment.length})</span>
+                <span>我的页面 (装备: {equipment.length} / 项目: {localProjects.length})</span>
               </button>
 
               <button
@@ -4425,9 +4564,41 @@ export async function getStaticProps() {
                 </div>
               )}
 
-              {/* 3. EQUIPMENT MANAGER TAB */}
+              {/* 3. MINE PAGE (EQUIPMENT & PROJECTS) MANAGER TAB */}
               {activeTab === 'equipment' && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+                <div className="space-y-4">
+                  {/* Mine Subtab Bar */}
+                  <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 w-fit">
+                    <button
+                      type="button"
+                      onClick={() => setMineSubTab('equipment')}
+                      className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                        mineSubTab === 'equipment'
+                          ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs'
+                          : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+                      }`}
+                    >
+                      <Monitor className="w-3.5 h-3.5 text-purple-500" />
+                      <span>硬件装备管理 ({equipment.length})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMineSubTab('projects')}
+                      className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                        mineSubTab === 'projects'
+                          ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs'
+                          : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+                      }`}
+                    >
+                      <FolderGit2 className="w-3.5 h-3.5 text-blue-500" />
+                      <span>我的开源与独立项目 ({localProjects.length})</span>
+                    </button>
+                  </div>
+
+                  {/* EQUIPMENT SUB-TAB */}
+                  {mineSubTab === 'equipment' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
                   {/* Left List Column */}
                   <div className="lg:col-span-5 space-y-3 lg:border-r lg:border-zinc-200/80 lg:dark:border-zinc-800/80 lg:pr-6">
                     <div className="flex items-center justify-between mb-2">
@@ -4603,6 +4774,196 @@ export async function getStaticProps() {
                       </div>
                     </form>
                   </div>
+                </div>
+              )}
+
+                  {/* PROJECTS SUB-TAB */}
+                  {mineSubTab === 'projects' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+                      {/* Left List Column */}
+                      <div className="lg:col-span-5 space-y-3 lg:border-r lg:border-zinc-200/80 lg:dark:border-zinc-800/80 lg:pr-6">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                            独立项目列表 ({localProjects.length})
+                          </h3>
+                          <button
+                            onClick={handleStartNewProject}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold text-white ${accentClasses.bg}`}
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>新增项目</span>
+                          </button>
+                        </div>
+
+                        <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
+                          {localProjects.map((p) => (
+                            <div
+                              key={p.id}
+                              className={`p-3 rounded-lg border transition-all flex items-start justify-between group ${
+                                editingProjId === p.id
+                                  ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30'
+                                  : 'border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50 dark:bg-zinc-800/40 hover:border-zinc-300'
+                              }`}
+                            >
+                              <div className="min-w-0 pr-2 cursor-pointer flex-1 flex items-center gap-2.5" onClick={() => handleEditProjectClick(p)}>
+                                {p.coverImage ? (
+                                  <img src={p.coverImage} alt={p.name} className="w-10 h-10 rounded-md object-cover shrink-0 border border-zinc-200 dark:border-zinc-700" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-md bg-blue-100 dark:bg-blue-950 flex items-center justify-center shrink-0 text-blue-600 font-bold text-xs">
+                                    <FolderGit2 className="w-5 h-5" />
+                                  </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                                      {p.name}
+                                    </h4>
+                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold shrink-0">
+                                      {p.category}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                                    {p.description}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  onClick={() => handleEditProjectClick(p)}
+                                  className="p-1 rounded-lg text-zinc-400 hover:text-blue-500"
+                                  title="编辑"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteProject(p.id)}
+                                  className="p-1 rounded-lg text-zinc-400 hover:text-rose-500"
+                                  title="删除"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Right Form Editor Column */}
+                      <div className="lg:col-span-7">
+                        <form onSubmit={handleSaveProject} className="space-y-4 bg-zinc-50 dark:bg-zinc-800/40 p-4 sm:p-5 rounded-md border border-zinc-200 dark:border-zinc-700">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                              <FolderGit2 className="w-4 h-4 text-blue-500" />
+                              <span>{editingProjId ? '编辑独立项目信息' : '添加全新独立项目'}</span>
+                            </h3>
+
+                            <button
+                              type="submit"
+                              className={`px-4 py-1.5 rounded-md text-xs font-bold text-white shadow-sm ${accentClasses.bg}`}
+                            >
+                              {editingProjId ? '保存项目更新' : '添加项目到列表'}
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-[11px] font-bold text-zinc-400 uppercase">项目名称</label>
+                              <input
+                                type="text"
+                                required
+                                value={projName}
+                                onChange={(e) => setProjName(e.target.value)}
+                                placeholder="如：Sanfun Digital Garden"
+                                className="w-full bg-white dark:bg-zinc-900 p-2.5 rounded-md text-xs text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 mt-1 font-bold"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[11px] font-bold text-zinc-400 uppercase">项目分类</label>
+                              <input
+                                type="text"
+                                value={projCategory}
+                                onChange={(e) => setProjCategory(e.target.value)}
+                                placeholder="Web 应用, 设计工具, 扩展插件"
+                                className="w-full bg-white dark:bg-zinc-900 p-2.5 rounded-md text-xs text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 mt-1"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-[11px] font-bold text-zinc-400 uppercase">GitHub 开源链接 (可选)</label>
+                              <input
+                                type="url"
+                                value={projGithubUrl}
+                                onChange={(e) => setProjGithubUrl(e.target.value)}
+                                placeholder="https://github.com/..."
+                                className="w-full bg-white dark:bg-zinc-900 p-2.5 rounded-md text-xs text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 mt-1"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[11px] font-bold text-zinc-400 uppercase">在线演示 / 体验链接 (可选)</label>
+                              <input
+                                type="url"
+                                value={projDemoUrl}
+                                onChange={(e) => setProjDemoUrl(e.target.value)}
+                                placeholder="https://app.example.com"
+                                className="w-full bg-white dark:bg-zinc-900 p-2.5 rounded-md text-xs text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 mt-1"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-[11px] font-bold text-zinc-400 uppercase">技术标签 (逗号分隔)</label>
+                              <input
+                                type="text"
+                                value={projTagsStr}
+                                onChange={(e) => setProjTagsStr(e.target.value)}
+                                placeholder="React, TypeScript, Tailwind"
+                                className="w-full bg-white dark:bg-zinc-900 p-2.5 rounded-md text-xs text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 mt-1"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[11px] font-bold text-zinc-400 uppercase">Star 数 / 关注度</label>
+                              <input
+                                type="number"
+                                value={projStars}
+                                onChange={(e) => setProjStars(Number(e.target.value))}
+                                placeholder="0"
+                                className="w-full bg-white dark:bg-zinc-900 p-2.5 rounded-md text-xs text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 mt-1"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-bold text-zinc-400 uppercase">项目封面图 URL</label>
+                            <input
+                              type="url"
+                              value={projCoverImage}
+                              onChange={(e) => setProjCoverImage(e.target.value)}
+                              placeholder="https://images.unsplash.com/..."
+                              className="w-full bg-white dark:bg-zinc-900 p-2.5 rounded-md text-xs text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 mt-1"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-bold text-zinc-400 uppercase">项目简介描述</label>
+                            <textarea
+                              rows={3}
+                              value={projDescription}
+                              onChange={(e) => setProjDescription(e.target.value)}
+                              placeholder="简述项目的核心优势与特色..."
+                              className="w-full bg-white dark:bg-zinc-900 p-3 rounded-lg text-xs text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 mt-1 resize-none"
+                            />
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

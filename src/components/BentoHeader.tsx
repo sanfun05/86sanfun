@@ -168,13 +168,38 @@ export const BentoHeader: React.FC<BentoHeaderProps> = ({
 
   const activeItem = items[activeIndex] || items[0];
 
+  const handleOpenHeroArticle = () => {
+    if (activeItem.article) {
+      onArticleClick(activeItem.article);
+      return;
+    }
+    if (activeItem.articleId) {
+      const foundById = articles.find(a => a.id === activeItem.articleId);
+      if (foundById) {
+        onArticleClick(foundById);
+        return;
+      }
+    }
+    const cleanItemTitle = (activeItem.title || '').replace(/[-：:—\s]/g, '');
+    const matched = articles.find(a => {
+      const cleanArtTitle = (a.title || '').replace(/[-：:—\s]/g, '');
+      return cleanArtTitle.includes(cleanItemTitle) || cleanItemTitle.includes(cleanArtTitle);
+    });
+    if (matched) {
+      onArticleClick(matched);
+    } else if (articles.length > 0) {
+      onArticleClick(articles[0]);
+    } else if (activeItem.url) {
+      window.open(activeItem.url, '_blank');
+    }
+  };
+
   // Primary filter pills matching Sanfun
   const filterPills = [
     { label: '精选', cat: '精选', icon: Star, color: 'bg-blue-600 text-white' },
     { label: '热门', cat: '热门', icon: Flame },
     { label: '必看', cat: '必看', icon: Zap },
     { label: '全部文章', cat: '全部', icon: BookOpen },
-    { label: '我的项目', cat: '我的项目', icon: Layers, tab: 'projects' },
     { label: '经验分享', cat: '经验分享' },
     { label: '软件推荐', cat: '软件推荐' },
     { label: '好物推荐', cat: '好物推荐' },
@@ -233,7 +258,10 @@ export const BentoHeader: React.FC<BentoHeaderProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 rounded-2xl overflow-hidden shadow-md border border-zinc-200/80 dark:border-zinc-800/80">
         
         {/* Left Large Hero Card (Span 8) */}
-        <div className={`lg:col-span-8 relative min-h-[190px] sm:min-h-[225px] bg-gradient-to-br ${activeItem.bannerBg} p-4.5 sm:p-5.5 text-white flex flex-col justify-between overflow-hidden transition-all duration-700 group`}>
+        <div 
+          onClick={handleOpenHeroArticle}
+          className={`lg:col-span-8 relative min-h-[190px] sm:min-h-[225px] bg-gradient-to-br ${activeItem.bannerBg} p-4.5 sm:p-5.5 text-white flex flex-col justify-between overflow-hidden transition-all duration-700 group cursor-pointer hover:opacity-95`}
+        >
           
           {/* Floating Decorative App Stickers Background */}
           <div className="absolute right-3 top-2 bottom-2 w-1/2 opacity-20 pointer-events-none grid grid-cols-3 gap-2 transform rotate-6 scale-100 transition-transform duration-700 group-hover:rotate-3 group-hover:scale-105">
@@ -252,8 +280,11 @@ export const BentoHeader: React.FC<BentoHeaderProps> = ({
             </span>
 
             <button
-              onClick={onOpenAIChat}
-              className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 flex items-center gap-1.5 transition-all shadow-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenAIChat();
+              }}
+              className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
               <span className="hidden sm:inline">问问 AI 博客助手</span>
@@ -281,8 +312,11 @@ export const BentoHeader: React.FC<BentoHeaderProps> = ({
               {items.map((_, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setActiveIndex(idx)}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveIndex(idx);
+                  }}
+                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                     activeIndex === idx ? 'w-5 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
                   }`}
                   aria-label={`Slide ${idx + 1}`}
@@ -291,32 +325,11 @@ export const BentoHeader: React.FC<BentoHeaderProps> = ({
             </div>
 
             <button
-              onClick={() => {
-                if (activeItem.article) {
-                  onArticleClick(activeItem.article);
-                  return;
-                }
-                if (activeItem.articleId) {
-                  const foundById = articles.find(a => a.id === activeItem.articleId);
-                  if (foundById) {
-                    onArticleClick(foundById);
-                    return;
-                  }
-                }
-                const cleanItemTitle = (activeItem.title || '').replace(/[-：:—\s]/g, '');
-                const matched = articles.find(a => {
-                  const cleanArtTitle = (a.title || '').replace(/[-：:—\s]/g, '');
-                  return cleanArtTitle.includes(cleanItemTitle) || cleanItemTitle.includes(cleanArtTitle);
-                });
-                if (matched) {
-                  onArticleClick(matched);
-                } else if (articles.length > 0) {
-                  onArticleClick(articles[0]);
-                } else if (activeItem.url) {
-                  window.open(activeItem.url, '_blank');
-                }
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenHeroArticle();
               }}
-              className="px-3.5 py-1.5 rounded-md bg-white text-zinc-950 hover:bg-amber-300 text-xs font-bold transition-all shadow-md flex items-center gap-1.5 group-hover:scale-105"
+              className="px-3.5 py-1.5 rounded-md bg-white text-zinc-950 hover:bg-amber-300 text-xs font-bold transition-all shadow-md flex items-center gap-1.5 group-hover:scale-105 cursor-pointer"
             >
               <span>查看详情</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -378,10 +391,10 @@ export const BentoHeader: React.FC<BentoHeaderProps> = ({
           <div className="pt-2 mt-2 border-t border-indigo-500/30 flex items-center justify-between text-xs text-indigo-200">
             <span className="truncate">关联看点</span>
             <button
-              onClick={() => onTabChange('projects')}
+              onClick={() => onTabChange('equipment')}
               className="font-bold hover:text-white flex items-center gap-1 shrink-0"
             >
-              <span>查看全部项目</span>
+              <span>查看我的装备与项目</span>
               <ChevronRight className="w-3 h-3" />
             </button>
           </div>
@@ -389,7 +402,7 @@ export const BentoHeader: React.FC<BentoHeaderProps> = ({
       </div>
 
       {/* 2. SANFUN HORIZONTAL FILTER PILLS ROW */}
-      <div className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto pb-1.5 no-scrollbar scroll-smooth">
+      <div className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto py-2 no-scrollbar scroll-smooth">
         {filterPills.map((pill) => {
           const IconComp = pill.icon;
           const isSelected = selectedCategory === pill.cat || (pill.cat === '精选' && selectedCategory === '精选');
@@ -397,21 +410,21 @@ export const BentoHeader: React.FC<BentoHeaderProps> = ({
             <button
               key={pill.label}
               onClick={() => {
-                if (pill.tab) {
-                  onTabChange(pill.tab);
+                if ((pill as any).tab) {
+                  onTabChange((pill as any).tab);
                 } else {
                   onSelectCategory(pill.cat === '全部' ? '全部' : pill.cat);
                   onSelectTag(null);
                 }
               }}
-              className={`px-4.5 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 shrink-0 shadow-2xs ${
+              className={`px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 flex items-center justify-center gap-1.5 shrink-0 shadow-2xs leading-none ${
                 isSelected
                   ? 'bg-blue-600 text-white shadow-md scale-105'
                   : 'bg-white/90 dark:bg-zinc-900/90 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800/80'
               }`}
             >
               {IconComp && <IconComp className="w-4 h-4 shrink-0" />}
-              <span>{pill.label}</span>
+              <span className="leading-none">{pill.label}</span>
             </button>
           );
         })}
